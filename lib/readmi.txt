@@ -1,0 +1,26 @@
+Structure of our app:
+
+lib/
+├── main.dart
+├── models/          # Model — data classes (User, Post, etc.)
+├── services/         # Model support — API calls, database, storage (raw data fetching)
+├── controllers/       # Controller — logic, state, decides what View shows
+├── screens/          # View — one file per screen
+└── widgets/          # View — reusable UI pieces
+
+services/  →  controllers/  →  screens/ + widgets/
+(get data)     (handle data,     (visualize)
+                decide state)
+
+
+
+MVC Structure (Authentification as an example):
+
+Model:       models/user.dart
+             ↓
+Data source: services/auth_service.dart   (placeholder — fake login)
+             ↓
+Controller:  controllers/auth_controller.dart   (holds state, notifies View)
+             ↓
+View:        screens/login_screen.dart  →  screens/main_screen.dart
+             widgets/primary_button.dart (reusable piece)
