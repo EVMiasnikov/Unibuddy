@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
       // accessed by any screen below it in the tree.
       create: (_) => AuthController(),
       child: MaterialApp(
-        title: 'My App',
+        title: 'Unibuddy',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),

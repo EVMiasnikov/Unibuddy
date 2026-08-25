@@ -14,6 +14,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isRegisterMode = false;
 
   @override
   void dispose() {
@@ -22,9 +23,13 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleSubmit() async {
     final controller = context.read<AuthController>();
-    await controller.login(_emailController.text, _passwordController.text);
+    if (_isRegisterMode) {
+      await controller.register(_emailController.text, _passwordController.text);
+    } else {
+      await controller.login(_emailController.text, _passwordController.text);
+    }
 
     if (!mounted) return;
     if (controller.isLoggedIn) {
@@ -50,10 +55,10 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const Icon(Icons.lock_outline, size: 64),
                 const SizedBox(height: 16),
-                const Text(
-                  'Welcome back',
+                Text(
+                  _isRegisterMode ? 'Create an account' : 'Welcome back',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 32),
                 TextField(
@@ -82,16 +87,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
                 const SizedBox(height: 24),
                 PrimaryButton(
-                  label: 'Log in',
+                  label: _isRegisterMode ? 'Sign up' : 'Log in',
                   isLoading: authController.isLoading,
-                  onPressed: _handleLogin,
+                  onPressed: _handleSubmit,
                 ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () {
-                    // TODO: navigate to a sign-up screen later
+                    setState(() => _isRegisterMode = !_isRegisterMode);
                   },
-                  child: const Text("Don't have an account? Sign up"),
+                  child: Text(
+                    _isRegisterMode
+                        ? 'Already have an account? Log in'
+                        : "Don't have an account? Sign up",
+                  ),
                 ),
               ],
             ),
