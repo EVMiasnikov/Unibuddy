@@ -57,7 +57,6 @@ class DefaultFirebaseOptions {
     projectId: 'unibuddy-5fe36',
     storageBucket: 'unibuddy-5fe36.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBiyO31fCjAbW52UdEnLKcs90s6iwuKs5k',
     appId: '1:482783383534:ios:21ae60691c5f83e36088ff',
@@ -66,7 +65,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'unibuddy-5fe36.firebasestorage.app',
     iosBundleId: 'com.example.unibuddy',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyBiyO31fCjAbW52UdEnLKcs90s6iwuKs5k',
     appId: '1:482783383534:ios:21ae60691c5f83e36088ff',

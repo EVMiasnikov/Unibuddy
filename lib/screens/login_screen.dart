@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/primary_button.dart';
 import 'main_screen.dart';
+import 'profile_setup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,8 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!mounted) return;
     if (controller.isLoggedIn) {
+      final destination = controller.currentUser!.hasCompletedProfile
+          ? const MainScreen()
+          : const ProfileSetupScreen();
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainScreen()),
+        MaterialPageRoute(builder: (_) => destination),
       );
     }
   }

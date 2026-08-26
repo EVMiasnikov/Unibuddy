@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'controllers/auth_controller.dart';
+import 'controllers/profile_controller.dart';
 import 'screens/login_screen.dart';
 
 class MyApp extends StatelessWidget {
@@ -8,12 +9,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      // AuthController is created once here and can be
-      // accessed by any screen below it in the tree.
-      create: (_) => AuthController(),
+    return MultiProvider(
+      // Both controllers are created once here and can be
+      // accessed by any screen below them in the tree.
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthController()),
+        ChangeNotifierProvider(create: (_) => ProfileController()),
+      ],
       child: MaterialApp(
-        title: 'Unibuddy',
+        title: 'My App',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
