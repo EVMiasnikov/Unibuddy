@@ -1,9 +1,10 @@
+import 'controllers/request_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/profile_controller.dart';
 import 'screens/login_screen.dart';
-
+import 'controllers/chat_controller.dart';
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -13,8 +14,10 @@ class MyApp extends StatelessWidget {
       // Both controllers are created once here and can be
       // accessed by any screen below them in the tree.
       providers: [
+        ChangeNotifierProvider(create: (_) => ChatController(),),
         ChangeNotifierProvider(create: (_) => AuthController()),
         ChangeNotifierProvider(create: (_) => ProfileController()),
+        ChangeNotifierProvider(create: (_) => RequestController()),
       ],
       child: MaterialApp(
         title: 'My App',
