@@ -261,7 +261,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
         itemCount:
             controller.myRequests.length,
 
-        separatorBuilder: (_, __) =>
+        separatorBuilder: (_, _) =>
             const SizedBox(height: 12),
 
         itemBuilder: (context, index) {

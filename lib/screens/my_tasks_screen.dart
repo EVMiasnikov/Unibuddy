@@ -201,7 +201,7 @@ class _MyTasksScreenState
         itemCount:
             controller.myTasks.length,
 
-        separatorBuilder: (_, __) =>
+        separatorBuilder: (_, _) =>
             const SizedBox(height: 12),
 
         itemBuilder: (context, index) {

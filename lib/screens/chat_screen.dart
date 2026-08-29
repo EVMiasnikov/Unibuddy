@@ -120,7 +120,7 @@ class ChatScreen extends StatelessWidget {
             itemCount:
                 conversations.length,
 
-            separatorBuilder: (_, __) =>
+            separatorBuilder: (_, _) =>
                 const Divider(height: 1),
 
             itemBuilder:
