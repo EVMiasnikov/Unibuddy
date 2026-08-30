@@ -345,4 +345,47 @@ Future<void> cancelRequest(
     const Duration(seconds: 10),
   );
 }
+
+
+// =========================================================
+// COMPLETE ACCEPTED REQUEST
+// =========================================================
+
+Future<void> completeRequest(
+  String requestId,
+) async {
+  final reference = _requests.doc(requestId);
+
+  await _db.runTransaction(
+    (transaction) async {
+      final snapshot =
+          await transaction.get(reference);
+
+      final data = snapshot.data();
+
+      if (!snapshot.exists || data == null) {
+        throw Exception(
+          'This request no longer exists.',
+        );
+      }
+
+      if (data['status'] !=
+          RequestStatus.accepted.name) {
+        throw Exception(
+          'Only accepted requests can be completed.',
+        );
+      }
+
+      transaction.update(
+        reference,
+        {
+          'status':
+              RequestStatus.completed.name,
+        },
+      );
+    },
+  ).timeout(
+    const Duration(seconds: 10),
+  );
+}
 }

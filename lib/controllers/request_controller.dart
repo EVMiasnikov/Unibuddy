@@ -279,4 +279,37 @@ Future<bool> cancelRequest(
     notifyListeners();
   }
 }
+
+
+// =========================================================
+// COMPLETE ACCEPTED REQUEST
+// =========================================================
+
+Future<bool> completeRequest(
+  String requestId,
+) async {
+  _isLoading = true;
+  _errorMessage = null;
+  notifyListeners();
+
+  try {
+    await _requestService.completeRequest(
+      requestId,
+    );
+
+    return true;
+  } catch (e) {
+    _errorMessage = e
+        .toString()
+        .replaceFirst(
+          'Exception: ',
+          '',
+        );
+
+    return false;
+  } finally {
+    _isLoading = false;
+    notifyListeners();
+  }
+}
 }

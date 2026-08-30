@@ -454,6 +454,87 @@ class _RequestCard extends StatelessWidget {
     }
   }
 
+  Future<void> _completeRequest(
+    BuildContext context,
+  ) async {
+    if (request.id == null) {
+      return;
+    }
+
+    final confirmed =
+        await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Complete Request',
+          ),
+          content: const Text(
+            'Mark this request as completed?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context)
+                    .pop(false);
+              },
+              child:
+                  const Text('Not yet'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context)
+                    .pop(true);
+              },
+              child:
+                  const Text('Complete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true ||
+        !context.mounted) {
+      return;
+    }
+
+    final controller =
+        context.read<RequestController>();
+
+    final success =
+        await controller.completeRequest(
+      request.id!,
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (success) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Request completed.',
+          ),
+        ),
+      );
+
+      await onChanged();
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            controller.errorMessage ??
+                'Failed to complete request.',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final date = request.dateTime;
@@ -596,6 +677,32 @@ class _RequestCard extends StatelessWidget {
                 request.note!,
                 style: const TextStyle(
                   color: Colors.grey,
+                ),
+              ),
+            ],
+
+            if (request.status ==
+                RequestStatus.accepted) ...[
+              const SizedBox(height: 16),
+
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    _completeRequest(context);
+                  },
+                  icon: const Icon(
+                    Icons.check_circle_outline,
+                  ),
+                  label: const Text(
+                    'Complete Request',
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor:
+                        Colors.green,
+                    foregroundColor:
+                        Colors.white,
+                  ),
                 ),
               ),
             ],
