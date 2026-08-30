@@ -61,6 +61,10 @@ class User {
   final List<String> languages;
   final Sex? sex;
 
+  // Whether this user is currently open to being matched as a buddy -
+  // a standing status the user toggles, not tied to any single request.
+  final bool isAcceptingBuddyRequests;
+
   User({
     required this.id,
     required this.email,
@@ -73,6 +77,7 @@ class User {
     this.photoUrl,
     this.languages = const [],
     this.sex,
+    this.isAcceptingBuddyRequests = false,
   });
 
   /// True once the extra profile info has been filled in.
@@ -91,6 +96,7 @@ class User {
     String? photoUrl,
     List<String>? languages,
     Sex? sex,
+    bool? isAcceptingBuddyRequests,
   }) {
     return User(
       id: id,
@@ -104,6 +110,7 @@ class User {
       photoUrl: photoUrl ?? this.photoUrl,
       languages: languages ?? this.languages,
       sex: sex ?? this.sex,
+      isAcceptingBuddyRequests: isAcceptingBuddyRequests ?? this.isAcceptingBuddyRequests,
     );
   }
 
@@ -120,6 +127,7 @@ class User {
       'photoUrl': photoUrl,
       'languages': languages,
       'sex': sex?.name,
+      'isAcceptingBuddyRequests': isAcceptingBuddyRequests,
     };
   }
 
@@ -137,6 +145,7 @@ class User {
       photoUrl: map['photoUrl'] as String?,
       languages: (map['languages'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       sex: _sexFromString(map['sex'] as String?),
+      isAcceptingBuddyRequests: map['isAcceptingBuddyRequests'] as bool? ?? false,
     );
   }
 

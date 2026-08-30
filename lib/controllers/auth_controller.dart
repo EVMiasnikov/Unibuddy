@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
@@ -26,7 +27,9 @@ class AuthController extends ChangeNotifier {
 
     try {
       final authUser = await _authService.login(email, password);
-      _currentUser = await _mergeWithProfile(authUser);
+      _currentUser = await _mergeWithProfile(authUser).timeout(const Duration(seconds: 12));
+    } on TimeoutException {
+      _errorMessage = 'Could not reach the server. Check your connection and try again.';
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
@@ -70,5 +73,35 @@ class AuthController extends ChangeNotifier {
   Future<User> _mergeWithProfile(User authUser) async {
     final profile = await _userService.getProfile(authUser.id, authUser.email);
     return profile ?? authUser;
+  }
+
+  /// Flips whether this user is currently accepting buddy requests -
+  /// a one-tap status toggle, like Couchsurfing's "accepting guests" switch.
+  /// Returns true on success so the caller (the toggle widget) knows
+  /// whether to keep the new state or revert it.
+  Future<bool> toggleBuddyStatus(bool isAccepting) async {
+    if (_currentUser == null) return false;
+    final updated = _currentUser!.copyWith(isAcceptingBuddyRequests: isAccepting);
+    return _persistUserUpdate(updated);
+  }
+
+  /// Updates buddy-related settings (currently just city) without
+  /// touching the accepting/not-accepting status itself.
+  Future<bool> updateBuddyCity(String city) async {
+    if (_currentUser == null) return false;
+    final updated = _currentUser!.copyWith(city: city);
+    return _persistUserUpdate(updated);
+  }
+
+  /// Shared save-and-update-state logic used by the buddy status actions above.
+  Future<bool> _persistUserUpdate(User updated) async {
+    try {
+      await _userService.saveProfile(updated).timeout(const Duration(seconds: 10));
+      _currentUser = updated;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }
