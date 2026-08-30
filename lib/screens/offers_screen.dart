@@ -21,6 +21,8 @@ class OffersScreen extends StatefulWidget {
 
 class _OffersScreenState
     extends State<OffersScreen> {
+  HelpType? _selectedHelpType;
+
   @override
   void initState() {
     super.initState();
@@ -216,6 +218,90 @@ class _OffersScreenState
   // =========================================================
   // UI
   // =========================================================
+
+  List<BuddyRequest> _visibleOffers(
+    List<BuddyRequest> offers,
+  ) {
+    final visible =
+        offers.where((offer) {
+      final selected =
+          _selectedHelpType;
+
+      return selected == null ||
+          offer.helpType == selected;
+    }).toList();
+
+    visible.sort(
+      (a, b) =>
+          a.dateTime.compareTo(b.dateTime),
+    );
+
+    return visible;
+  }
+
+  String _selectedTypeLabel() {
+    final selected =
+        _selectedHelpType;
+
+    if (selected == null) {
+      return 'All request types';
+    }
+
+    return selected.label;
+  }
+
+  Widget _buildTypeFilter() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        0,
+      ),
+      child: DropdownButtonFormField<HelpType?>(
+        initialValue:
+            _selectedHelpType,
+
+        isExpanded:
+            true,
+
+        decoration:
+            const InputDecoration(
+          labelText:
+              'Request type',
+          prefixIcon:
+              Icon(Icons.filter_list),
+          border:
+              OutlineInputBorder(),
+        ),
+
+        items: [
+          const DropdownMenuItem<HelpType?>(
+            value:
+                null,
+            child:
+                Text('All request types'),
+          ),
+          ...HelpType.values.map(
+            (type) {
+              return DropdownMenuItem<HelpType?>(
+                value:
+                    type,
+                child:
+                    Text(type.label),
+              );
+            },
+          ),
+        ],
+
+        onChanged: (value) {
+          setState(() {
+            _selectedHelpType = value;
+          });
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(
@@ -427,49 +513,74 @@ class _OffersScreenState
     // OFFER LIST
     // =======================================================
 
-    return RefreshIndicator(
-      onRefresh:
-          _loadOffers,
+    final offers =
+        _visibleOffers(controller.offers);
 
-      child:
-          ListView.separated(
-        padding:
-            const EdgeInsets.all(
-          16,
-        ),
+    return Column(
+      children: [
+        _buildTypeFilter(),
 
-        itemCount:
-            controller
-                .offers.length,
+        if (offers.isEmpty)
+          Expanded(
+            child: Center(
+              child: Text(
+                'No ${_selectedTypeLabel().toLowerCase()} requests available.',
+                textAlign:
+                    TextAlign.center,
+                style:
+                    const TextStyle(
+                  color:
+                      Colors.grey,
+                ),
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh:
+                  _loadOffers,
 
-        separatorBuilder:
-            (_, _) =>
-                const SizedBox(
-          height: 12,
-        ),
+              child:
+                  ListView.separated(
+                padding:
+                    const EdgeInsets.all(
+                  16,
+                ),
 
-        itemBuilder:
-            (context, index) {
-          final request =
-              controller
-                  .offers[index];
+                itemCount:
+                    offers.length,
 
-          return _OfferCard(
-            request:
-                request,
+                separatorBuilder:
+                    (_, _) =>
+                        const SizedBox(
+                  height: 12,
+                ),
 
-            isLoading:
-                controller
-                    .isLoading,
+                itemBuilder:
+                    (context, index) {
+                  final request =
+                      offers[index];
 
-            onAccept: () {
-              _acceptRequest(
-                request,
-              );
-            },
-          );
-        },
-      ),
+                  return _OfferCard(
+                    request:
+                        request,
+
+                    isLoading:
+                        controller
+                            .isLoading,
+
+                    onAccept: () {
+                      _acceptRequest(
+                        request,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
