@@ -55,47 +55,54 @@ class MainScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // ==============================
-              // Be a Buddy - status toggle, and Request a Buddy - mode selection
-              // ==============================
-              SizedBox(
-                height: 180,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // =========================
-                    // Buddy status toggle
-                    // =========================
-                    const Expanded(child: BuddyStatusCard()),
+              // // ==============================
+              // // Be a Buddy - status toggle, and Request a Buddy - mode selection
+              // // ==============================
 
-                    const SizedBox(width: 16),
-
-                    // =========================
-                    // Requester Mode
-                    // =========================
-                    Expanded(
-                      child: SizedBox(
-                        height: 180,
-                        child: MainActionTile(
-                          icon:
-                              BuddyMode.seekBuddy.icon,
-
-                          label:
-                              BuddyMode.seekBuddy.title,
-
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    const MyRequestsScreen(),
-                              ),
-                            );
-                          },
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final requestTile = MainActionTile(
+                    icon: BuddyMode.seekBuddy.icon,
+                    label: BuddyMode.seekBuddy.title,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const MyRequestsScreen(),
                         ),
-                      ),
+                      );
+                    },
+                  );
+
+                  if (constraints.maxWidth < 520) {
+                    return Column(
+                      children: [
+                        const BuddyStatusCard(),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 150,
+                          width: double.infinity,
+                          child: requestTile,
+                        ),
+                      ],
+                    );
+                  }
+
+                  return SizedBox(
+                    height: 200,
+                    child: Row(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.stretch,
+                      children: [
+                        const Expanded(
+                          child: BuddyStatusCard(),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(child: requestTile),
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
 
               const SizedBox(height: 20),
