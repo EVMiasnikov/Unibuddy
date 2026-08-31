@@ -5,6 +5,7 @@ import 'controllers/auth_controller.dart';
 import 'controllers/profile_controller.dart';
 import 'screens/login_screen.dart';
 import 'controllers/chat_controller.dart';
+import 'controllers/buddy_directory_controller.dart';
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -18,6 +19,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthController()),
         ChangeNotifierProvider(create: (_) => ProfileController()),
         ChangeNotifierProvider(create: (_) => RequestController()),
+        ChangeNotifierProvider(create: (_) => BuddyDirectoryController()),
       ],
       child: MaterialApp(
         title: 'My App',

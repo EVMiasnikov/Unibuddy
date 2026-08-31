@@ -74,6 +74,17 @@ class BuddySearchService {
 
       final data = document.data();
 
+      // Only show students who currently have their
+      // "accepting buddy requests" status turned on.
+      final isAccepting =
+          data['isAcceptingBuddyRequests']
+              as bool? ??
+              false;
+
+      if (!isAccepting) {
+        continue;
+      }
+      
       final name =
           (data['name'] ?? '')
               .toString()

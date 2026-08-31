@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
 import '../models/buddy_mode.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/available_buddies_bar.dart';
 import '../widgets/buddy_status_card.dart';
 import '../widgets/main_action_button.dart';
 import '../widgets/main_action_tile.dart';
@@ -54,53 +55,55 @@ class MainScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final requestTile = MainActionTile(
-                    icon: BuddyMode.seekBuddy.icon,
-                    label: BuddyMode.seekBuddy.title,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const MyRequestsScreen(),
-                        ),
-                      );
-                    },
-                  );
+              // ==============================
+              // Be a Buddy - status toggle, and Request a Buddy - mode selection
+              // ==============================
+              SizedBox(
+                height: 180,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // =========================
+                    // Buddy status toggle
+                    // =========================
+                    const Expanded(child: BuddyStatusCard()),
 
-                  if (constraints.maxWidth < 520) {
-                    return Column(
-                      children: [
-                        const BuddyStatusCard(),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 150,
-                          width: double.infinity,
-                          child: requestTile,
-                        ),
-                      ],
-                    );
-                  }
+                    const SizedBox(width: 16),
 
-                  return SizedBox(
-                    height: 200,
-                    child: Row(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.stretch,
-                      children: [
-                        const Expanded(
-                          child: BuddyStatusCard(),
+                    // =========================
+                    // Requester Mode
+                    // =========================
+                    Expanded(
+                      child: SizedBox(
+                        height: 180,
+                        child: MainActionTile(
+                          icon:
+                              BuddyMode.seekBuddy.icon,
+
+                          label:
+                              BuddyMode.seekBuddy.title,
+
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const MyRequestsScreen(),
+                              ),
+                            );
+                          },
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(child: requestTile),
-                      ],
+                      ),
                     ),
-                  );
-                },
+                  ],
+                ),
               ),
 
               const SizedBox(height: 20),
+
+              // ==============================
+              // Available buddies advertisement bar
+              // ==============================
+              const AvailableBuddiesBar(),
             ],
           ),
         ),

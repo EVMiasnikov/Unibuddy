@@ -53,4 +53,26 @@ class UserService {
     await ref.putData(photoBytes, SettableMetadata(contentType: 'image/jpeg'));
     return ref.getDownloadURL();
   }
+
+  /// Finds other students in [city] who currently have their
+  /// "accepting buddy requests" status turned on.
+  /// Used both for the main-screen "available buddies" bar and
+  /// (should be) anywhere else a specific buddy can be picked.
+  Future<List<User>> getAvailableBuddies(
+    String city, {
+    String? excludeUserId,
+    int limit = 20,
+  }) async {
+    final snapshot = await _db
+        .collection('users')
+        .where('isAcceptingBuddyRequests', isEqualTo: true)
+        .where('city', isEqualTo: city)
+        .limit(limit)
+        .get();
+
+    return snapshot.docs
+        .where((doc) => doc.id != excludeUserId)
+        .map((doc) => User.fromMap(doc.id, doc.data()))
+        .toList();
+  }
 }
