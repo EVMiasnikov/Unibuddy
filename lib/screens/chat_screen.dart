@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/buddy_request.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/chat_controller.dart';
 import '../models/chat_conversation.dart';
+import '../models/buddy_request.dart';   // 加这个
+import '../models/user.dart';
+import '../services/user_service.dart';
 import 'chat_detail_screen.dart';
+
 
 class ChatScreen extends StatelessWidget {
   const ChatScreen({super.key});
 
+
   @override
   Widget build(BuildContext context) {
+
     final user =
         context.watch<AuthController>().currentUser;
+
 
     if (user == null) {
       return const Scaffold(
@@ -22,35 +28,45 @@ class ChatScreen extends StatelessWidget {
       );
     }
 
+
     final chatController =
         context.read<ChatController>();
 
+
     return Scaffold(
+
       appBar: AppBar(
         title: const Text('My Chats'),
       ),
 
-      body: StreamBuilder<
-          List<ChatConversation>>(
+
+      body: StreamBuilder<List<ChatConversation>>(
+
         stream:
-            chatController
-                .watchMyConversations(
+            chatController.watchMyConversations(
           user.id,
         ),
 
+
         builder: (context, snapshot) {
+
+
           if (snapshot.connectionState ==
                   ConnectionState.waiting &&
               !snapshot.hasData) {
+
             return const Center(
-              child:
-                  CircularProgressIndicator(),
+              child: CircularProgressIndicator(),
             );
           }
 
+
           if (snapshot.hasError) {
+
             return Center(
+
               child: Padding(
+
                 padding:
                     const EdgeInsets.all(24),
 
@@ -64,47 +80,59 @@ class ChatScreen extends StatelessWidget {
             );
           }
 
+
           final conversations =
               snapshot.data ?? [];
 
+
           if (conversations.isEmpty) {
+
             return const Center(
+
               child: Padding(
+
                 padding:
                     EdgeInsets.all(32),
 
                 child: Column(
+
                   mainAxisAlignment:
-                      MainAxisAlignment
-                          .center,
+                      MainAxisAlignment.center,
 
                   children: [
+
                     Icon(
-                      Icons
-                          .chat_bubble_outline,
+                      Icons.chat_bubble_outline,
                       size: 56,
                       color: Colors.grey,
                     ),
 
-                    SizedBox(height: 16),
+
+                    SizedBox(height:16),
+
 
                     Text(
                       'No chats yet.',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize:18,
                         fontWeight:
                             FontWeight.bold,
                       ),
                     ),
 
-                    SizedBox(height: 8),
+
+                    SizedBox(height:8),
+
 
                     Text(
                       'A chat will appear after a buddy accepts a request.',
                       textAlign:
                           TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey,
+
+                      style:
+                          TextStyle(
+                        color:
+                            Colors.grey,
                       ),
                     ),
                   ],
@@ -113,24 +141,38 @@ class ChatScreen extends StatelessWidget {
             );
           }
 
+
+
           return ListView.separated(
+
             padding:
                 const EdgeInsets.all(12),
+
 
             itemCount:
                 conversations.length,
 
-            separatorBuilder: (_, _) =>
-                const Divider(height: 1),
+
+            separatorBuilder:
+                (_, _) =>
+                    const Divider(
+                      height:1,
+                    ),
+
 
             itemBuilder:
-                (context, index) {
+                (context,index){
+
+
               final conversation =
                   conversations[index];
 
+
               return _ChatTile(
+
                 conversation:
                     conversation,
+
                 currentUserId:
                     user.id,
               );
@@ -142,92 +184,246 @@ class ChatScreen extends StatelessWidget {
   }
 }
 
-class _ChatTile
-    extends StatelessWidget {
+
+
+
+
+class _ChatTile extends StatelessWidget {
+
+
   final ChatConversation conversation;
+
   final String currentUserId;
 
+
+
   const _ChatTile({
+
     required this.conversation,
+
     required this.currentUserId,
+
   });
+
+
 
   @override
   Widget build(BuildContext context) {
+
+
     final otherPersonName =
+
         currentUserId ==
                 conversation.requesterId
+
             ? conversation.buddyName
-            : conversation
-                .requesterName;
+
+            : conversation.requesterName;
+
+
+
+    final otherPersonId =
+
+        currentUserId ==
+                conversation.requesterId
+
+            ? conversation.buddyId
+
+            : conversation.requesterId;
+
+
 
     final date =
         conversation.requestDateTime;
 
+
+
     final subtitleTitle =
+
         '${conversation.helpType.label} · '
         '${date.day}/${date.month}/${date.year}';
+
+
 
     final lastMessage =
         conversation.lastMessage;
 
-    return ListTile(
-      contentPadding:
-          const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 6,
-      ),
 
-      leading: const CircleAvatar(
-        child: Icon(Icons.person),
-      ),
 
-      title: Text(
-        otherPersonName,
-        style:
-            const TextStyle(
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+    return FutureBuilder<User?>(
 
-      subtitle: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
 
-        children: [
-          Text(subtitleTitle),
-
-          if (lastMessage != null &&
-              lastMessage.isNotEmpty)
-            Text(
-              lastMessage,
-              maxLines: 1,
-              overflow:
-                  TextOverflow.ellipsis,
-              style:
-                  const TextStyle(
-                color: Colors.grey,
+      future:
+          UserService()
+              .getUserById(
+                otherPersonId,
               ),
-            ),
-        ],
-      ),
 
-      trailing:
-          const Icon(
-        Icons.chevron_right,
-      ),
 
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) =>
-                ChatDetailScreen(
-              conversation:
-                  conversation,
-            ),
+      builder:
+          (context,snapshot){
+
+
+
+        final otherUser =
+            snapshot.data;
+
+
+
+        return ListTile(
+
+
+          contentPadding:
+              const EdgeInsets.symmetric(
+            horizontal:12,
+            vertical:6,
           ),
+
+
+
+          leading:
+              CircleAvatar(
+
+
+            radius:24,
+
+
+            backgroundImage:
+
+                otherUser?.photoUrl != null
+
+                    ? NetworkImage(
+                        otherUser!.photoUrl!,
+                      )
+
+                    : null,
+
+
+
+            child:
+
+                otherUser?.photoUrl == null
+
+                    ? Text(
+
+                        otherUser?.fullName
+                                .isNotEmpty == true
+
+                            ? otherUser!
+                                .fullName[0]
+                                .toUpperCase()
+
+                            : '?',
+
+                        style:
+                            const TextStyle(
+                          fontSize:18,
+                        ),
+                      )
+
+                    : null,
+
+          ),
+
+
+
+
+          title:
+              Text(
+
+            otherPersonName,
+
+            style:
+                const TextStyle(
+              fontWeight:
+                  FontWeight.bold,
+            ),
+
+          ),
+
+
+
+
+          subtitle:
+              Column(
+
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+
+
+            children:[
+
+
+              Text(
+                subtitleTitle,
+              ),
+
+
+
+              if(lastMessage != null &&
+                 lastMessage.isNotEmpty)
+
+                Text(
+
+                  lastMessage,
+
+                  maxLines:1,
+
+                  overflow:
+                      TextOverflow.ellipsis,
+
+
+                  style:
+                      const TextStyle(
+                    color:
+                        Colors.grey,
+                  ),
+
+                ),
+
+            ],
+
+          ),
+
+
+
+
+
+          trailing:
+              const Icon(
+                Icons.chevron_right,
+              ),
+
+
+
+
+          onTap:(){
+
+            Navigator.of(context).push(
+
+              MaterialPageRoute(
+
+                builder:(_)=>
+
+                    ChatDetailScreen(
+
+                      conversation:
+                          conversation,
+
+                    ),
+
+              ),
+
+            );
+
+          },
+
         );
+
       },
+
     );
+
   }
+
 }

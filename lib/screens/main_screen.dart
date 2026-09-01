@@ -6,14 +6,10 @@ import '../models/buddy_mode.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/available_buddies_bar.dart';
 import '../widgets/buddy_status_card.dart';
-import '../widgets/main_action_button.dart';
 import '../widgets/main_action_tile.dart';
 import '../widgets/profile_menu_button.dart';
 import '../widgets/main_bottom_bar.dart';
-
-import 'chat_screen.dart';
 import 'my_requests_screen.dart';
-import 'offers_screen.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});

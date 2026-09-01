@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import '../models/user.dart';
+import '../services/user_service.dart';
 import '../models/buddy_request.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/chat_controller.dart';
@@ -23,12 +24,50 @@ class ChatDetailScreen extends StatefulWidget {
 
 class _ChatDetailScreenState
     extends State<ChatDetailScreen> {
+  final UserService _userService = UserService();
+  User? _otherUser;
   final _messageController =
       TextEditingController();
 
   final _scrollController =
       ScrollController();
+  @override
+void initState() {
+  super.initState();
 
+  _loadOtherUser();
+}
+
+
+Future<void> _loadOtherUser() async {
+
+  final user =
+      context.read<AuthController>().currentUser;
+
+  if (user == null) {
+    return;
+  }
+
+
+  final otherId =
+      user.id ==
+              widget.conversation.requesterId
+          ? widget.conversation.buddyId
+          : widget.conversation.requesterId;
+
+
+  final result =
+      await _userService.getUserById(
+    otherId,
+  );
+
+
+  if (mounted) {
+    setState(() {
+      _otherUser = result;
+    });
+  }
+}
   @override
   void dispose() {
     _messageController.dispose();
@@ -287,9 +326,17 @@ class _ChatDetailScreenState
                             user.id;
 
                     return _MessageBubble(
-                      message: message,
-                      isMine: isMine,
-                    );
+  message: message,
+  isMine: isMine,
+
+  senderName: isMine
+      ? user.fullName
+      : otherPersonName,
+
+  photoUrl: isMine
+      ? user.photoUrl
+      : _otherUser?.photoUrl,
+);
                   },
                 );
               },
@@ -391,13 +438,17 @@ class _ChatDetailScreenState
 
 class _MessageBubble
     extends StatelessWidget {
-  final ChatMessage message;
-  final bool isMine;
+      final ChatMessage message;
+      final bool isMine;
+      final String senderName;
+      final String? photoUrl;
 
   const _MessageBubble({
     required this.message,
     required this.isMine,
-  });
+    required this.senderName,
+    required this.photoUrl,
+});
 
   @override
   Widget build(BuildContext context) {
@@ -407,77 +458,135 @@ class _MessageBubble
     ).format(context);
 
     return Align(
-      // Self on the right, other person on the left
-      alignment:
-          isMine
-              ? Alignment.centerRight
-              : Alignment.centerLeft,
+  alignment: isMine
+      ? Alignment.centerRight
+      : Alignment.centerLeft,
 
-      child: Container(
-        constraints:
-            const BoxConstraints(
-          maxWidth: 340,
-        ),
+  child: Row(
+    mainAxisSize: MainAxisSize.min,
 
-        margin:
-            const EdgeInsets.only(
-          bottom: 10,
-        ),
+    crossAxisAlignment:
+        CrossAxisAlignment.start,
 
-        padding:
-            const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 10,
-        ),
+    children: [
 
-        decoration: BoxDecoration(
-          color:
-              isMine
-                  ? Theme.of(context)
-                      .colorScheme
-                      .primaryContainer
-                  : Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHighest,
+      if (!isMine)
+        Padding(
+          padding:
+              const EdgeInsets.only(
+            right: 8,
+          ),
 
-          borderRadius:
-              BorderRadius.circular(
-            16,
+          child: CircleAvatar(
+            radius: 18,
+
+            backgroundImage:
+                photoUrl != null
+                    ? NetworkImage(photoUrl!)
+                    : null,
+
+            child:
+                photoUrl == null
+                    ? Text(
+                        senderName[0]
+                            .toUpperCase(),
+                      )
+                    : null,
           ),
         ),
 
-        child: Column(
-          crossAxisAlignment:
-              isMine
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
 
-          children: [
-            // Message
+      Column(
+        crossAxisAlignment:
+            isMine
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
+
+        children: [
+
+          if (!isMine)
             Text(
-              message.text,
+              senderName,
 
               style:
                   const TextStyle(
-                fontSize: 15,
-              ),
-            ),
-
-            const SizedBox(height: 4),
-
-            // Time
-            Text(
-              time,
-
-              style:
-                  const TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 color: Colors.grey,
               ),
             ),
-          ],
-        ),
+
+
+          Container(
+            constraints:
+                const BoxConstraints(
+              maxWidth: 340,
+            ),
+
+            margin:
+                const EdgeInsets.only(
+              bottom: 10,
+            ),
+
+            padding:
+                const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
+            ),
+
+            decoration:
+                BoxDecoration(
+              color:
+                  isMine
+                      ? Theme.of(context)
+                          .colorScheme
+                          .primaryContainer
+                      : Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest,
+
+              borderRadius:
+                  BorderRadius.circular(
+                16,
+              ),
+            ),
+
+
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.end,
+
+              children: [
+
+                Text(
+                  message.text,
+                  style:
+                      const TextStyle(
+                    fontSize: 15,
+                  ),
+                ),
+
+
+                const SizedBox(
+                  height: 4,
+                ),
+
+
+                Text(
+                  time,
+
+                  style:
+                      const TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-    );
+    ],
+  ),
+);
   }
 }

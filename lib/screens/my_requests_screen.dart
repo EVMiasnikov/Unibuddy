@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import '../widgets/accepted_buddy_info.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/request_controller.dart';
 import '../models/buddy_request.dart';
@@ -680,7 +680,26 @@ class _RequestCard extends StatelessWidget {
                 ),
               ),
             ],
+            if (request.acceptedBuddyId != null) ...[
+                const SizedBox(height: 12),
 
+                AcceptedBuddyInfo(
+                  buddyId: request.acceptedBuddyId!,
+                ),
+            ],
+            if (request.status ==
+                    RequestStatus.pending) ...[
+                      
+                  const SizedBox(height: 12),
+
+                  const Text(
+                    'Waiting for a Buddy to accept your request.',
+                    style: TextStyle(
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+            
             if (request.status ==
                 RequestStatus.accepted) ...[
               const SizedBox(height: 16),
@@ -727,11 +746,11 @@ class _StatusChip extends StatelessWidget {
 
     switch (status) {
       case RequestStatus.pending:
-        text = 'Pending';
-        break;
+      text = 'Waiting';
+      break;
 
       case RequestStatus.accepted:
-        text = 'Accepted';
+        text = 'Buddy Found';
         break;
 
       case RequestStatus.completed:
@@ -744,7 +763,22 @@ class _StatusChip extends StatelessWidget {
     }
 
     return Chip(
-      label: Text(text),
-    );
+  label: Text(text),
+
+  backgroundColor: switch(status){
+
+    RequestStatus.pending =>
+      Colors.orange.shade100,
+
+    RequestStatus.accepted =>
+      Colors.green.shade100,
+
+    RequestStatus.completed =>
+      Colors.blue.shade100,
+
+    RequestStatus.cancelled =>
+      Colors.grey.shade300,
+  },
+);
   }
 }
