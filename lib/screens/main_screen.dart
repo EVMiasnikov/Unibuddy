@@ -9,6 +9,7 @@ import '../widgets/buddy_status_card.dart';
 import '../widgets/main_action_button.dart';
 import '../widgets/main_action_tile.dart';
 import '../widgets/profile_menu_button.dart';
+import '../widgets/main_bottom_bar.dart';
 
 import 'chat_screen.dart';
 import 'my_requests_screen.dart';
@@ -120,38 +121,7 @@ class MainScreen extends StatelessWidget {
       // Quick access - Chat / Browse / My Requests
       // Docked to the bottom of the screen.
       // ==============================
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              MainActionButton(
-                icon: Icons.chat_bubble_outline,
-                label: 'Chat',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ChatScreen()),
-                ),
-              ),
-              const SizedBox(width: 12),
-              MainActionButton(
-                icon: Icons.search,
-                label: 'Browse Requests',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const OffersScreen()),
-                ),
-              ),
-              const SizedBox(width: 12),
-              MainActionButton(
-                icon: Icons.list_alt_outlined,
-                label: 'My Requests',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const MyRequestsScreen()),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      bottomNavigationBar: const MainBottomBar(),
     );
   }
 }

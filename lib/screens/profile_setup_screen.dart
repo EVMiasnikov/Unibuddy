@@ -35,6 +35,32 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   // which doesn't exist in a browser.
   Uint8List? _photoBytes;
 
+  // The photo already saved on the account, shown until a new one is picked.
+  String? _existingPhotoUrl;
+
+  // True if the user already had a completed profile when this screen
+  // opened - i.e. they're editing, not doing first-time setup.
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = context.read<AuthController>().currentUser;
+    if (user == null) return;
+
+    _isEditing = user.hasCompletedProfile;
+
+    _nameController.text = user.name ?? '';
+    _surnameController.text = user.surname ?? '';
+    _universityController.text = user.university ?? '';
+    _cityController.text = user.city ?? '';
+    _ageController.text = user.age?.toString() ?? '';
+    _position = user.position;
+    _sex = user.sex;
+    _selectedLanguages.addAll(user.languages);
+    _existingPhotoUrl = user.photoUrl;
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -77,9 +103,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     if (!mounted) return;
     if (savedUser != null) {
       authController.setCurrentUser(savedUser);
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainScreen()),
-      );
+      if (_isEditing) {
+        // Came here to edit an existing profile - just return to where we were.
+        Navigator.of(context).pop();
+      } else {
+        // First-time setup - proceed into the app.
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+        );
+      }
     }
   }
 
@@ -88,7 +120,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     final profileController = context.watch<ProfileController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Complete your profile')),
+      appBar: AppBar(title: Text(_isEditing ? 'Edit profile' : 'Complete your profile')),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -100,8 +132,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   onTap: _pickPhoto,
                   child: CircleAvatar(
                     radius: 48,
-                    backgroundImage: _photoBytes != null ? MemoryImage(_photoBytes!) : null,
-                    child: _photoBytes == null ? const Icon(Icons.add_a_photo, size: 32) : null,
+                    backgroundImage: _photoBytes != null
+                        ? MemoryImage(_photoBytes!)
+                        : (_existingPhotoUrl != null ? NetworkImage(_existingPhotoUrl!) : null) as ImageProvider?,
+                    child: (_photoBytes == null && _existingPhotoUrl == null)
+                        ? const Icon(Icons.add_a_photo, size: 32)
+                        : null,
                   ),
                 ),
               ),
@@ -203,7 +239,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
               const SizedBox(height: 32),
               PrimaryButton(
-                label: 'Save and continue',
+                label: _isEditing ? 'Save changes' : 'Save and continue',
                 isLoading: profileController.isSaving,
                 onPressed: _handleSave,
               ),

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
+import '../controllers/auth_controller.dart';
 import '../models/user.dart';
 import '../services/user_service.dart';
+import '../widgets/main_bottom_bar.dart';
+import 'profile_setup_screen.dart';
 
 class ProfileViewScreen extends StatefulWidget {
   final String userId;
@@ -60,14 +63,39 @@ class _ProfileViewScreenState
     }
   }
 
+  Future<void> _editProfile() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ProfileSetupScreen()),
+    );
+    // The edit screen saves directly to Firestore - reload so this
+    // screen reflects whatever changed.
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    _loadProfile();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isOwnProfile = context.watch<AuthController>().currentUser?.id == widget.userId;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
+        actions: [
+          if (isOwnProfile)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit profile',
+              onPressed: _editProfile,
+            ),
+        ],
       ),
 
       body: _buildBody(),
+      bottomNavigationBar: const MainBottomBar(),
     );
   }
 

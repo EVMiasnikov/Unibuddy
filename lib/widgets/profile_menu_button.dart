@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
 import '../screens/login_screen.dart';
+import '../screens/profile_view_screen.dart';
 
 enum _ProfileMenuAction { viewProfile, logout }
 
@@ -72,10 +73,13 @@ class ProfileMenuButton extends StatelessWidget {
       onSelected: (action) {
         switch (action) {
           case _ProfileMenuAction.viewProfile:
-            // TODO: navigate to a dedicated profile screen once it exists
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile screen coming soon')),
-            );
+            if (user != null) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ProfileViewScreen(userId: user.id),
+                ),
+              );
+            }
             break;
           case _ProfileMenuAction.logout:
             _logout(context);
