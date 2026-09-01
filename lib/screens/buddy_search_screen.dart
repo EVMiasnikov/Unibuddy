@@ -111,7 +111,7 @@ class _BuddySearchScreenState
         child: Column(
           children: [
             Text(
-              'Only buddies registered in ${widget.city} are shown.',
+              'Only buddies in ${widget.city} who are currently accepting requests are shown.',
               style:
                   const TextStyle(
                 color: Colors.grey,

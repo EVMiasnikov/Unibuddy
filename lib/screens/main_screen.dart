@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
 import '../models/buddy_mode.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/available_buddies_bar.dart';
 import '../widgets/buddy_status_card.dart';
 import '../widgets/main_action_button.dart';
 import '../widgets/main_action_tile.dart';
@@ -54,6 +55,10 @@ class MainScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
+              // // ==============================
+              // // Be a Buddy - status toggle, and Request a Buddy - mode selection
+              // // ==============================
+
               LayoutBuilder(
                 builder: (context, constraints) {
                   final requestTile = MainActionTile(
@@ -101,6 +106,11 @@ class MainScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 20),
+
+              // ==============================
+              // Available buddies advertisement bar
+              // ==============================
+              const AvailableBuddiesBar(),
             ],
           ),
         ),
