@@ -63,7 +63,7 @@ class _AvailableBuddiesBarState extends State<AvailableBuddiesBar> {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: controller.buddies.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            separatorBuilder: (_, _) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
               final buddy = controller.buddies[index];
               return SizedBox(
