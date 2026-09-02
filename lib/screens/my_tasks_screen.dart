@@ -210,6 +210,7 @@ class _MyTasksScreenState
 
           return _TaskCard(
             task: task,
+            onChanged: _loadTasks,
           );
         },
       ),
@@ -219,10 +220,93 @@ class _MyTasksScreenState
 
 class _TaskCard extends StatelessWidget {
   final BuddyRequest task;
+  final Future<void> Function() onChanged;
 
   const _TaskCard({
     required this.task,
+    required this.onChanged,
   });
+
+  Future<void> _completeTask(
+    BuildContext context,
+  ) async {
+    if (task.id == null) {
+      return;
+    }
+
+    final confirmed =
+        await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Complete Task',
+          ),
+          content: const Text(
+            'Mark this task as completed?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context)
+                    .pop(false);
+              },
+              child:
+                  const Text('Not yet'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context)
+                    .pop(true);
+              },
+              child:
+                  const Text('Complete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true ||
+        !context.mounted) {
+      return;
+    }
+
+    final controller =
+        context.read<RequestController>();
+
+    final success =
+        await controller.completeRequest(
+      task.id!,
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (success) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Task completed.',
+          ),
+        ),
+      );
+
+      await onChanged();
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            controller.errorMessage ??
+                'Failed to complete task.',
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -364,6 +448,32 @@ class _TaskCard extends StatelessWidget {
                 task.note!,
                 style: const TextStyle(
                   color: Colors.grey,
+                ),
+              ),
+            ],
+
+            if (task.status ==
+                RequestStatus.accepted) ...[
+              const SizedBox(height: 16),
+
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    _completeTask(context);
+                  },
+                  icon: const Icon(
+                    Icons.check_circle_outline,
+                  ),
+                  label: const Text(
+                    'Complete Task',
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor:
+                        Colors.green,
+                    foregroundColor:
+                        Colors.white,
+                  ),
                 ),
               ),
             ],
