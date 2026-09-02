@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 /// What kind of help the student needs.
 ///
 /// One request can contain only ONE help type.
@@ -34,12 +35,7 @@ extension HelpTypeLabel on HelpType {
 }
 
 /// Current state of a request.
-enum RequestStatus {
-  pending,
-  accepted,
-  completed,
-  cancelled,
-}
+enum RequestStatus { pending, accepted, completed, cancelled }
 
 /// A real help request created by an exchange student.
 class BuddyRequest {
@@ -81,6 +77,14 @@ class BuddyRequest {
   /// When this request was created.
   final DateTime createdAt;
 
+  /// Feedback left by the requester after completion.
+  final int? requesterRating;
+  final String? requesterFeedback;
+
+  /// Feedback left by the buddy after completion.
+  final int? buddyRating;
+  final String? buddyFeedback;
+
   const BuddyRequest({
     this.id,
     required this.requesterId,
@@ -95,41 +99,51 @@ class BuddyRequest {
     this.acceptedBuddyId,
     required this.status,
     required this.createdAt,
+    this.requesterRating,
+    this.requesterFeedback,
+    this.buddyRating,
+    this.buddyFeedback,
   });
   Map<String, dynamic> toMap() {
-  return {
-    'requesterId': requesterId,
-    'requesterName': requesterName,
-    'helpType': helpType.name,
-    'customHelp': customHelp,
-    'note': note,
-    'country': country,
-    'city': city,
-    'dateTime': dateTime,
-    'targetBuddyId': targetBuddyId,
-    'acceptedBuddyId': acceptedBuddyId,
-    'status': status.name,
-    'createdAt': createdAt,
-  };
-}
-factory BuddyRequest.fromMap(
-  String id,
-  Map<String, dynamic> map,
-) {
-  return BuddyRequest(
-    id: id,
-    requesterId: map['requesterId'] as String,
-    requesterName: map['requesterName'] as String,
-    helpType: HelpType.values.byName(map['helpType'] as String),
-    customHelp: map['customHelp'] as String?,
-    note: map['note'] as String?,
-    country: map['country'] as String,
-    city: map['city'] as String,
-    dateTime: (map['dateTime'] as Timestamp).toDate(),
-    targetBuddyId: map['targetBuddyId'] as String?,
-    acceptedBuddyId: map['acceptedBuddyId'] as String?,
-    status: RequestStatus.values.byName(map['status'] as String),
-    createdAt: (map['createdAt'] as Timestamp).toDate(),
-  );
-}
+    return {
+      'requesterId': requesterId,
+      'requesterName': requesterName,
+      'helpType': helpType.name,
+      'customHelp': customHelp,
+      'note': note,
+      'country': country,
+      'city': city,
+      'dateTime': dateTime,
+      'targetBuddyId': targetBuddyId,
+      'acceptedBuddyId': acceptedBuddyId,
+      'status': status.name,
+      'createdAt': createdAt,
+      'requesterRating': requesterRating,
+      'requesterFeedback': requesterFeedback,
+      'buddyRating': buddyRating,
+      'buddyFeedback': buddyFeedback,
+    };
+  }
+
+  factory BuddyRequest.fromMap(String id, Map<String, dynamic> map) {
+    return BuddyRequest(
+      id: id,
+      requesterId: map['requesterId'] as String,
+      requesterName: map['requesterName'] as String,
+      helpType: HelpType.values.byName(map['helpType'] as String),
+      customHelp: map['customHelp'] as String?,
+      note: map['note'] as String?,
+      country: map['country'] as String,
+      city: map['city'] as String,
+      dateTime: (map['dateTime'] as Timestamp).toDate(),
+      targetBuddyId: map['targetBuddyId'] as String?,
+      acceptedBuddyId: map['acceptedBuddyId'] as String?,
+      status: RequestStatus.values.byName(map['status'] as String),
+      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      requesterRating: map['requesterRating'] as int?,
+      requesterFeedback: map['requesterFeedback'] as String?,
+      buddyRating: map['buddyRating'] as int?,
+      buddyFeedback: map['buddyFeedback'] as String?,
+    );
+  }
 }

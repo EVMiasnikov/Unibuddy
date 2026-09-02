@@ -503,6 +503,109 @@ class _RequestCard extends StatelessWidget {
     }
   }
 
+  Future<void> _submitFeedback(BuildContext context) async {
+    if (request.id == null) {
+      return;
+    }
+
+    final commentController = TextEditingController();
+    var rating = 5;
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Leave Feedback'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      final value = index + 1;
+
+                      return IconButton(
+                        onPressed: () {
+                          setDialogState(() {
+                            rating = value;
+                          });
+                        },
+                        icon: Icon(
+                          value <= rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                        ),
+                      );
+                    }),
+                  ),
+                  TextField(
+                    controller: commentController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Comment',
+                      hintText: 'How was the help?',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                  child: const Text('Submit'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    final feedback = commentController.text.trim();
+    commentController.dispose();
+
+    if (submitted != true || !context.mounted) {
+      return;
+    }
+
+    final controller = context.read<RequestController>();
+
+    final success = await controller.submitRequesterFeedback(
+      requestId: request.id!,
+      rating: rating,
+      feedback: feedback,
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (success) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Feedback submitted.')));
+
+      await onChanged();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            controller.errorMessage ?? 'Failed to submit feedback.',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final date = request.dateTime;
@@ -642,8 +745,77 @@ class _RequestCard extends StatelessWidget {
                 ),
               ),
             ],
+
+            if (request.status == RequestStatus.completed) ...[
+              const SizedBox(height: 16),
+
+              if (request.requesterRating == null)
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      _submitFeedback(context);
+                    },
+                    icon: const Icon(Icons.star_outline),
+                    label: const Text('Leave Feedback'),
+                  ),
+                )
+              else
+                _FeedbackSummary(
+                  title: 'Your feedback',
+                  rating: request.requesterRating!,
+                  comment: request.requesterFeedback,
+                ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FeedbackSummary extends StatelessWidget {
+  final String title;
+  final int rating;
+  final String? comment;
+
+  const _FeedbackSummary({
+    required this.title,
+    required this.rating,
+    this.comment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanComment = comment?.trim();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Row(
+            children: List.generate(5, (index) {
+              return Icon(
+                index < rating ? Icons.star : Icons.star_border,
+                size: 18,
+                color: Colors.amber,
+              );
+            }),
+          ),
+          if (cleanComment != null && cleanComment.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(cleanComment),
+          ],
+        ],
       ),
     );
   }

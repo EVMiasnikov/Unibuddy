@@ -8,13 +8,9 @@ class RequestController extends ChangeNotifier {
   final RequestService _requestService;
   final ChatService _chatService;
 
-  RequestController({
-    RequestService? requestService,
-    ChatService? chatService,
-  })  : _requestService =
-            requestService ?? RequestService(),
-        _chatService =
-            chatService ?? ChatService();
+  RequestController({RequestService? requestService, ChatService? chatService})
+    : _requestService = requestService ?? RequestService(),
+      _chatService = chatService ?? ChatService();
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -27,66 +23,47 @@ class RequestController extends ChangeNotifier {
 
   String? get errorMessage => _errorMessage;
 
-  List<BuddyRequest> get myRequests =>
-      List.unmodifiable(_myRequests);
+  List<BuddyRequest> get myRequests => List.unmodifiable(_myRequests);
 
-  List<BuddyRequest> get offers =>
-      List.unmodifiable(_offers);
+  List<BuddyRequest> get offers => List.unmodifiable(_offers);
 
-  List<BuddyRequest> get myTasks =>
-      List.unmodifiable(_myTasks);
+  List<BuddyRequest> get myTasks => List.unmodifiable(_myTasks);
 
   // =========================================================
   // CREATE REQUEST
   // =========================================================
 
-  Future<bool> createRequest(
-  BuddyRequest request,
-) async {
-  _isLoading = true;
-  _errorMessage = null;
-  notifyListeners();
-
-  try {
-    await _requestService.createRequest(
-      request,
-    );
-
-    return true;
-  } catch (e) {
-    _errorMessage = e
-        .toString()
-        .replaceFirst(
-          'Exception: ',
-          '',
-        );
-
-    return false;
-  } finally {
-    _isLoading = false;
-    notifyListeners();
-  }
-}
-  // =========================================================
-  // MY REQUESTS
-  // =========================================================
-
-  Future<void> loadMyRequests(
-    String requesterId,
-  ) async {
+  Future<bool> createRequest(BuddyRequest request) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _myRequests =
-          await _requestService.getMyRequests(
-        requesterId,
-      );
+      await _requestService.createRequest(request);
+
+      return true;
     } catch (e) {
-      _errorMessage = e
-          .toString()
-          .replaceFirst('Exception: ', '');
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+  // =========================================================
+  // MY REQUESTS
+  // =========================================================
+
+  Future<void> loadMyRequests(String requesterId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _myRequests = await _requestService.getMyRequests(requesterId);
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -97,16 +74,12 @@ class RequestController extends ChangeNotifier {
   // OFFERS
   // =========================================================
 
-  Future<void> loadOffers(
-    String currentUserId,
-    String? currentUserCity,
-  ) async {
+  Future<void> loadOffers(String currentUserId, String? currentUserCity) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    if (currentUserCity == null ||
-        currentUserCity.trim().isEmpty) {
+    if (currentUserCity == null || currentUserCity.trim().isEmpty) {
       _offers = [];
 
       _errorMessage =
@@ -118,15 +91,12 @@ class RequestController extends ChangeNotifier {
     }
 
     try {
-      _offers =
-          await _requestService.getPublicRequests(
+      _offers = await _requestService.getPublicRequests(
         currentUserId,
         currentUserCity,
       );
     } catch (e) {
-      _errorMessage = e
-          .toString()
-          .replaceFirst('Exception: ', '');
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -143,8 +113,7 @@ class RequestController extends ChangeNotifier {
     required String buddyName,
   }) async {
     if (request.id == null) {
-      _errorMessage =
-          'This request does not have a valid ID.';
+      _errorMessage = 'This request does not have a valid ID.';
       notifyListeners();
       return false;
     }
@@ -168,15 +137,11 @@ class RequestController extends ChangeNotifier {
       );
 
       // 3. Remove it from the offers board after successful acceptance.
-      _offers.removeWhere(
-        (item) => item.id == request.id,
-      );
+      _offers.removeWhere((item) => item.id == request.id);
 
       return true;
     } catch (e) {
-      _errorMessage = e
-          .toString()
-          .replaceFirst('Exception: ', '');
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
 
       return false;
     } finally {
@@ -189,127 +154,146 @@ class RequestController extends ChangeNotifier {
   // MY TASKS
   // =========================================================
 
-  Future<void> loadMyTasks(
-    String buddyId,
-  ) async {
+  Future<void> loadMyTasks(String buddyId) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _myTasks =
-          await _requestService.getMyTasks(
-        buddyId,
-      );
+      _myTasks = await _requestService.getMyTasks(buddyId);
     } catch (e) {
-      _errorMessage = e
-          .toString()
-          .replaceFirst('Exception: ', '');
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
   // =========================================================
-// DELETE PENDING REQUEST
-// =========================================================
+  // DELETE PENDING REQUEST
+  // =========================================================
 
-Future<bool> deleteRequest(
-  String requestId,
-) async {
-  _isLoading = true;
-  _errorMessage = null;
-  notifyListeners();
-
-  try {
-    await _requestService.deleteRequest(
-      requestId,
-    );
-
-    _myRequests.removeWhere(
-      (request) =>
-          request.id == requestId,
-    );
-
-    return true;
-  } catch (e) {
-    _errorMessage = e
-        .toString()
-        .replaceFirst(
-          'Exception: ',
-          '',
-        );
-
-    return false;
-  } finally {
-    _isLoading = false;
+  Future<bool> deleteRequest(String requestId) async {
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
+
+    try {
+      await _requestService.deleteRequest(requestId);
+
+      _myRequests.removeWhere((request) => request.id == requestId);
+
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
-}
 
+  // =========================================================
+  // CANCEL ACCEPTED REQUEST
+  // =========================================================
 
-// =========================================================
-// CANCEL ACCEPTED REQUEST
-// =========================================================
-
-Future<bool> cancelRequest(
-  String requestId,
-) async {
-  _isLoading = true;
-  _errorMessage = null;
-  notifyListeners();
-
-  try {
-    await _requestService.cancelRequest(
-      requestId,
-    );
-
-    return true;
-  } catch (e) {
-    _errorMessage = e
-        .toString()
-        .replaceFirst(
-          'Exception: ',
-          '',
-        );
-
-    return false;
-  } finally {
-    _isLoading = false;
+  Future<bool> cancelRequest(String requestId) async {
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
+
+    try {
+      await _requestService.cancelRequest(requestId);
+
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
-}
 
+  // =========================================================
+  // COMPLETE ACCEPTED REQUEST
+  // =========================================================
 
-// =========================================================
-// COMPLETE ACCEPTED REQUEST
-// =========================================================
-
-Future<bool> completeRequest(
-  String requestId,
-) async {
-  _isLoading = true;
-  _errorMessage = null;
-  notifyListeners();
-
-  try {
-    await _requestService.completeRequest(
-      requestId,
-    );
-
-    return true;
-  } catch (e) {
-    _errorMessage = e
-        .toString()
-        .replaceFirst(
-          'Exception: ',
-          '',
-        );
-
-    return false;
-  } finally {
-    _isLoading = false;
+  Future<bool> completeRequest(String requestId) async {
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
+
+    try {
+      await _requestService.completeRequest(requestId);
+
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
-}
+
+  // =========================================================
+  // FEEDBACK
+  // =========================================================
+
+  Future<bool> submitRequesterFeedback({
+    required String requestId,
+    required int rating,
+    required String feedback,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _requestService.submitRequesterFeedback(
+        requestId: requestId,
+        rating: rating,
+        feedback: feedback,
+      );
+
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> submitBuddyFeedback({
+    required String requestId,
+    required int rating,
+    required String feedback,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _requestService.submitBuddyFeedback(
+        requestId: requestId,
+        rating: rating,
+        feedback: feedback,
+      );
+
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }
