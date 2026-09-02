@@ -37,6 +37,20 @@ class UserService {
     if (!doc.exists || doc.data() == null) return null;
     return User.fromMap(uid, doc.data()!);
   }
+  /// Fetch user profile only by uid.
+Future<User?> getUserById(String uid) async {
+  final doc =
+      await _db.collection('users').doc(uid).get();
+
+  if (!doc.exists || doc.data() == null) {
+    return null;
+  }
+
+  return User.fromMap(
+    uid,
+    doc.data()!,
+  );
+}
 
   /// Saves/overwrites the profile document for this user.
   Future<void> saveProfile(User user) async {

@@ -60,17 +60,35 @@ class _OffersScreenState
   // =========================================================
 
   Future<void> _acceptRequest(
-    BuddyRequest request,
-  ) async {
-    final user =
-        context
-            .read<AuthController>()
-            .currentUser;
+  BuddyRequest request,
+) async {
+  final user =
+      context
+          .read<AuthController>()
+          .currentUser;
 
-    if (user == null ||
-        request.id == null) {
-      return;
-    }
+  if (user == null ||
+      request.id == null) {
+    return;
+  }
+
+
+  // =======================================================
+  // CHECK BUDDY MODE
+  // =======================================================
+
+  if (!user.isAcceptingBuddyRequests) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Please enable "Be a Buddy" before accepting requests.',
+        ),
+      ),
+    );
+
+    return;
+  }
 
     // =======================================================
     // CONFIRM DIALOG
