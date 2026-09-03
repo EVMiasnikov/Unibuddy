@@ -7,6 +7,7 @@ import '../models/buddy_request.dart';
 import '../services/buddy_search_service.dart';
 import 'buddy_search_screen.dart';
 import 'profile_view_screen.dart';
+import '../widgets/main_bottom_bar.dart';
 
 class CreateRequestScreen
     extends StatefulWidget {
@@ -809,6 +810,11 @@ class _CreateRequestScreenState
           ],
         ),
       ),
+      // ==============================
+      // Quick access - Chat / Browse / My Requests
+      // Docked to the bottom of the screen.
+      // ==============================
+      bottomNavigationBar: const MainBottomBar(),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/buddy_search_service.dart';
 import 'profile_view_screen.dart';
+import '../widgets/main_bottom_bar.dart';
 
 class BuddySearchScreen
     extends StatefulWidget {
@@ -172,6 +173,11 @@ class _BuddySearchScreenState
           ],
         ),
       ),
+      // ==============================
+      // Quick access - Chat / Browse / My Requests
+      // Docked to the bottom of the screen.
+      // ==============================
+      bottomNavigationBar: const MainBottomBar(),
     );
   }
 

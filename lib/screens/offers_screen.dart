@@ -8,6 +8,7 @@ import '../widgets/app_drawer.dart';
 
 import 'chat_screen.dart';
 import 'my_tasks_screen.dart';
+import '../widgets/main_bottom_bar.dart';
 
 class OffersScreen extends StatefulWidget {
   const OffersScreen({
@@ -390,6 +391,11 @@ class _OffersScreenState
           controller,
         ),
       ),
+      // ==============================
+      // Quick access - Chat / Browse / My Requests
+      // Docked to the bottom of the screen.
+      // ==============================
+      bottomNavigationBar: const MainBottomBar(),
     );
   }
 

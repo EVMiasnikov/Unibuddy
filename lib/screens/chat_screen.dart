@@ -7,7 +7,7 @@ import '../models/buddy_request.dart';   // 加这个
 import '../models/user.dart';
 import '../services/user_service.dart';
 import 'chat_detail_screen.dart';
-
+import '../widgets/main_bottom_bar.dart';
 
 class ChatScreen extends StatelessWidget {
   const ChatScreen({super.key});
@@ -180,6 +180,11 @@ class ChatScreen extends StatelessWidget {
           );
         },
       ),
+      // ==============================
+      // Quick access - Chat / Browse / My Requests
+      // Docked to the bottom of the screen.
+      // ==============================
+      bottomNavigationBar: const MainBottomBar(),
     );
   }
 }

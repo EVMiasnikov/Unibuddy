@@ -8,6 +8,7 @@ import '../controllers/chat_controller.dart';
 import '../models/chat_conversation.dart';
 import '../models/chat_message.dart';
 import 'profile_view_screen.dart';
+import '../widgets/main_bottom_bar.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final ChatConversation conversation;
@@ -428,6 +429,11 @@ Future<void> _loadOtherUser() async {
           ),
         ],
       ),
+      // ==============================
+      // Quick access - Chat / Browse / My Requests
+      // Docked to the bottom of the screen.
+      // ==============================
+      bottomNavigationBar: const MainBottomBar(),
     );
   }
 }

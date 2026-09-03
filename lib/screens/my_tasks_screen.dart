@@ -7,6 +7,7 @@ import '../models/buddy_request.dart';
 import '../widgets/app_drawer.dart';
 import 'chat_screen.dart';
 import 'offers_screen.dart';
+import '../widgets/main_bottom_bar.dart';
 
 class MyTasksScreen extends StatefulWidget {
   const MyTasksScreen({super.key});
@@ -97,6 +98,11 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
       ),
 
       body: SafeArea(child: _buildBody(controller)),
+      // ==============================
+      // Quick access - Chat / Browse / My Requests
+      // Docked to the bottom of the screen.
+      // ==============================
+      bottomNavigationBar: const MainBottomBar(),
     );
   }
 

@@ -7,6 +7,7 @@ import '../models/buddy_request.dart';
 import '../widgets/app_drawer.dart';
 import 'chat_screen.dart';
 import 'create_request_screen.dart';
+import '../widgets/main_bottom_bar.dart';
 
 class MyRequestsScreen extends StatefulWidget {
   const MyRequestsScreen({super.key});
@@ -126,6 +127,11 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
       // Main content
       // ==============================
       body: SafeArea(child: _buildBody(controller)),
+      // ==============================
+      // Quick access - Chat / Browse / My Requests
+      // Docked to the bottom of the screen.
+      // ==============================
+      bottomNavigationBar: const MainBottomBar(),
     );
   }
 
