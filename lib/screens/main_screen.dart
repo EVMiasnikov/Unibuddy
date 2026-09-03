@@ -16,8 +16,7 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user =
-        context.watch<AuthController>().currentUser;
+    final user = context.watch<AuthController>().currentUser;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -34,81 +33,78 @@ class MainScreen extends StatelessWidget {
       ),
 
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
 
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
 
-            children: [
-              Text(
-                'Welcome, ${user?.name ?? 'Guest'}!',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              children: [
+                Text(
+                  'Welcome, ${user?.name ?? 'Guest'}!',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              // // ==============================
-              // // Be a Buddy - status toggle, and Request a Buddy - mode selection
-              // // ==============================
-
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final requestTile = MainActionTile(
-                    icon: BuddyMode.seekBuddy.icon,
-                    label: BuddyMode.seekBuddy.title,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const MyRequestsScreen(),
-                        ),
-                      );
-                    },
-                  );
-
-                  if (constraints.maxWidth < 520) {
-                    return Column(
-                      children: [
-                        const BuddyStatusCard(),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 150,
-                          width: double.infinity,
-                          child: requestTile,
-                        ),
-                      ],
+                // // ==============================
+                // // Be a Buddy - status toggle, and Request a Buddy - mode selection
+                // // ==============================
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final requestTile = MainActionTile(
+                      icon: BuddyMode.seekBuddy.icon,
+                      label: BuddyMode.seekBuddy.title,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const MyRequestsScreen(),
+                          ),
+                        );
+                      },
                     );
-                  }
 
-                  return SizedBox(
-                    height: 200,
-                    child: Row(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.stretch,
-                      children: [
-                        const Expanded(
-                          child: BuddyStatusCard(),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(child: requestTile),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                    if (constraints.maxWidth < 520) {
+                      return Column(
+                        children: [
+                          const BuddyStatusCard(),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 150,
+                            width: double.infinity,
+                            child: requestTile,
+                          ),
+                        ],
+                      );
+                    }
 
-              const SizedBox(height: 20),
+                    return SizedBox(
+                      height: 200,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Expanded(child: BuddyStatusCard()),
+                          const SizedBox(width: 16),
+                          Expanded(child: requestTile),
+                        ],
+                      ),
+                    );
+                  },
+                ),
 
-              // ==============================
-              // Available buddies advertisement bar
-              // ==============================
-              const AvailableBuddiesBar(),
-            ],
+                const SizedBox(height: 20),
+
+                // ==============================
+                // Available buddies advertisement bar
+                // ==============================
+                const AvailableBuddiesBar(),
+              ],
+            ),
           ),
         ),
       ),

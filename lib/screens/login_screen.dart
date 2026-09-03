@@ -50,65 +50,74 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Icon(Icons.lock_outline, size: 64),
-                const SizedBox(height: 16),
-                Text(
-                  _isRegisterMode ? 'Create an account' : 'Welcome back',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: ConstrainedBox(
+                // Keeps the form vertically centered when it fits, and lets
+                // it scroll instead of overflowing once the keyboard shrinks
+                // the available height below the form's natural size.
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),           
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Icon(Icons.lock_outline, size: 64),
+                    const SizedBox(height: 16),
+                    Text(
+                      _isRegisterMode ? 'Create an account' : 'Welcome back',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 32),
+                    TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Password',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    if (authController.errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        authController.errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    PrimaryButton(
+                      label: _isRegisterMode ? 'Sign up' : 'Log in',
+                      isLoading: authController.isLoading,
+                      onPressed: _handleSubmit,
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () {
+                        setState(() => _isRegisterMode = !_isRegisterMode);
+                      },
+                      child: Text(
+                        _isRegisterMode
+                            ? 'Already have an account? Log in'
+                            : "Don't have an account? Sign up",
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 32),
-                TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                if (authController.errorMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    authController.errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                PrimaryButton(
-                  label: _isRegisterMode ? 'Sign up' : 'Log in',
-                  isLoading: authController.isLoading,
-                  onPressed: _handleSubmit,
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () {
-                    setState(() => _isRegisterMode = !_isRegisterMode);
-                  },
-                  child: Text(
-                    _isRegisterMode
-                        ? 'Already have an account? Log in'
-                        : "Don't have an account? Sign up",
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),  
+            );
+          },
         ),
       ),
     );
