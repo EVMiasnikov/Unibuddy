@@ -12,12 +12,12 @@ class MyTasksScreen extends StatefulWidget {
   const MyTasksScreen({super.key});
 
   @override
-  State<MyTasksScreen> createState() =>
-      _MyTasksScreenState();
+  State<MyTasksScreen> createState() => _MyTasksScreenState();
 }
 
-class _MyTasksScreenState
-    extends State<MyTasksScreen> {
+class _MyTasksScreenState extends State<MyTasksScreen> {
+  RequestStatus? _selectedStatus;
+
   @override
   void initState() {
     super.initState();
@@ -28,36 +28,29 @@ class _MyTasksScreenState
   }
 
   Future<void> _loadTasks() async {
-    final user =
-        context.read<AuthController>().currentUser;
+    final user = context.read<AuthController>().currentUser;
 
     if (user == null) {
       return;
     }
 
-    await context
-        .read<RequestController>()
-        .loadMyTasks(user.id);
+    await context.read<RequestController>().loadMyTasks(user.id);
   }
 
   void _openOffers() {
     Navigator.of(context).pop();
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => const OffersScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const OffersScreen()));
   }
 
   void _openMyChats() {
     Navigator.of(context).pop();
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const ChatScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ChatScreen()));
   }
 
   void _switchMode() {
@@ -70,8 +63,7 @@ class _MyTasksScreenState
 
   @override
   Widget build(BuildContext context) {
-    final controller =
-        context.watch<RequestController>();
+    final controller = context.watch<RequestController>();
 
     return Scaffold(
       drawer: AppDrawer(
@@ -104,42 +96,27 @@ class _MyTasksScreenState
         title: const Text('My Tasks'),
       ),
 
-      body: SafeArea(
-        child: _buildBody(controller),
-      ),
+      body: SafeArea(child: _buildBody(controller)),
     );
   }
 
-  Widget _buildBody(
-    RequestController controller,
-  ) {
-    if (controller.isLoading &&
-        controller.myTasks.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+  Widget _buildBody(RequestController controller) {
+    if (controller.isLoading && controller.myTasks.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    if (controller.errorMessage != null &&
-        controller.myTasks.isEmpty) {
+    if (controller.errorMessage != null && controller.myTasks.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 48,
-              ),
+              const Icon(Icons.error_outline, size: 48),
 
               const SizedBox(height: 12),
 
-              Text(
-                controller.errorMessage!,
-                textAlign: TextAlign.center,
-              ),
+              Text(controller.errorMessage!, textAlign: TextAlign.center),
 
               const SizedBox(height: 16),
 
@@ -158,23 +135,15 @@ class _MyTasksScreenState
         child: Padding(
           padding: EdgeInsets.all(32),
           child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.task_alt_outlined,
-                size: 56,
-                color: Colors.grey,
-              ),
+              Icon(Icons.task_alt_outlined, size: 56, color: Colors.grey),
 
               SizedBox(height: 16),
 
               Text(
                 'No tasks yet.',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
 
               SizedBox(height: 8),
@@ -182,9 +151,7 @@ class _MyTasksScreenState
               Text(
                 'Requests you accept will appear here.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
+                style: TextStyle(color: Colors.grey),
               ),
             ],
           ),
@@ -192,56 +159,279 @@ class _MyTasksScreenState
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadTasks,
+    final tasks = _visibleTasks(controller.myTasks);
 
-      child: ListView.separated(
-        padding: const EdgeInsets.all(16),
+    return Column(
+      children: [
+        _buildStatusFilter(),
 
-        itemCount:
-            controller.myTasks.length,
+        Expanded(
+          child: tasks.isEmpty
+              ? Center(
+                  child: Text(
+                    'No ${_statusLabel(_selectedStatus).toLowerCase()} tasks.',
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadTasks,
 
-        separatorBuilder: (_, _) =>
-            const SizedBox(height: 12),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
 
-        itemBuilder: (context, index) {
-          final task =
-              controller.myTasks[index];
+                    itemCount: tasks.length,
 
-          return _TaskCard(
-            task: task,
-          );
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+
+                    itemBuilder: (context, index) {
+                      final task = tasks[index];
+
+                      return _TaskCard(task: task, onChanged: _loadTasks);
+                    },
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  List<BuddyRequest> _visibleTasks(List<BuddyRequest> tasks) {
+    final status = _selectedStatus;
+
+    if (status == null) {
+      return tasks;
+    }
+
+    return tasks.where((task) => task.status == status).toList();
+  }
+
+  Widget _buildStatusFilter() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: DropdownButtonFormField<RequestStatus?>(
+        initialValue: _selectedStatus,
+        isExpanded: true,
+        decoration: const InputDecoration(
+          labelText: 'Status',
+          prefixIcon: Icon(Icons.filter_list),
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        ),
+        items: [
+          const DropdownMenuItem<RequestStatus?>(
+            value: null,
+            child: Text('All statuses'),
+          ),
+          ...RequestStatus.values.map(
+            (status) => DropdownMenuItem<RequestStatus?>(
+              value: status,
+              child: Text(_statusLabel(status)),
+            ),
+          ),
+        ],
+        onChanged: (status) {
+          setState(() {
+            _selectedStatus = status;
+          });
         },
       ),
     );
+  }
+
+  String _statusLabel(RequestStatus? status) {
+    switch (status) {
+      case null:
+        return 'All statuses';
+      case RequestStatus.pending:
+        return 'Pending';
+      case RequestStatus.accepted:
+        return 'Accepted';
+      case RequestStatus.completed:
+        return 'Completed';
+      case RequestStatus.cancelled:
+        return 'Cancelled';
+    }
   }
 }
 
 class _TaskCard extends StatelessWidget {
   final BuddyRequest task;
+  final Future<void> Function() onChanged;
 
-  const _TaskCard({
-    required this.task,
-  });
+  const _TaskCard({required this.task, required this.onChanged});
+
+  Future<void> _completeTask(BuildContext context) async {
+    if (task.id == null) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Complete Task'),
+          content: const Text('Mark this task as completed?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: const Text('Not yet'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: const Text('Complete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+
+    final controller = context.read<RequestController>();
+
+    final success = await controller.completeRequest(task.id!);
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (success) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Task completed.')));
+
+      await onChanged();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(controller.errorMessage ?? 'Failed to complete task.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _submitFeedback(BuildContext context) async {
+    if (task.id == null) {
+      return;
+    }
+
+    final commentController = TextEditingController();
+    var rating = 5;
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Leave Feedback'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      final value = index + 1;
+
+                      return IconButton(
+                        onPressed: () {
+                          setDialogState(() {
+                            rating = value;
+                          });
+                        },
+                        icon: Icon(
+                          value <= rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                        ),
+                      );
+                    }),
+                  ),
+                  TextField(
+                    controller: commentController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Comment',
+                      hintText: 'How was the request?',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                  child: const Text('Submit'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    final feedback = commentController.text.trim();
+    commentController.dispose();
+
+    if (submitted != true || !context.mounted) {
+      return;
+    }
+
+    final controller = context.read<RequestController>();
+
+    final success = await controller.submitBuddyFeedback(
+      requestId: task.id!,
+      rating: rating,
+      feedback: feedback,
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (success) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Feedback submitted.')));
+
+      await onChanged();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            controller.errorMessage ?? 'Failed to submit feedback.',
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final date = task.dateTime;
 
-    final dateText =
-        '${date.day}/${date.month}/${date.year}';
+    final dateText = '${date.day}/${date.month}/${date.year}';
 
-    final timeText =
-        TimeOfDay.fromDateTime(date)
-            .format(context);
+    final timeText = TimeOfDay.fromDateTime(date).format(context);
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
 
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
             // =========================
@@ -254,27 +444,20 @@ class _TaskCard extends StatelessWidget {
                     task.helpType.label,
                     style: const TextStyle(
                       fontSize: 17,
-                      fontWeight:
-                          FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
 
-                _TaskStatusChip(
-                  status: task.status,
-                ),
+                _TaskStatusChip(status: task.status),
               ],
             ),
 
             // If the type is Other
-            if (task.helpType ==
-                    HelpType.other &&
-                task.customHelp != null) ...[
+            if (task.helpType == HelpType.other && task.customHelp != null) ...[
               const SizedBox(height: 6),
 
-              Text(
-                task.customHelp!,
-              ),
+              Text(task.customHelp!),
             ],
 
             const SizedBox(height: 12),
@@ -284,16 +467,11 @@ class _TaskCard extends StatelessWidget {
             // =========================
             Row(
               children: [
-                const Icon(
-                  Icons.person_outline,
-                  size: 18,
-                ),
+                const Icon(Icons.person_outline, size: 18),
 
                 const SizedBox(width: 6),
 
-                Text(
-                  task.requesterName,
-                ),
+                Text(task.requesterName),
               ],
             ),
 
@@ -304,16 +482,11 @@ class _TaskCard extends StatelessWidget {
             // =========================
             Row(
               children: [
-                const Icon(
-                  Icons.location_on_outlined,
-                  size: 18,
-                ),
+                const Icon(Icons.location_on_outlined, size: 18),
 
                 const SizedBox(width: 6),
 
-                Text(
-                  '${task.city}, ${task.country}',
-                ),
+                Text('${task.city}, ${task.country}'),
               ],
             ),
 
@@ -324,32 +497,25 @@ class _TaskCard extends StatelessWidget {
             // =========================
             Row(
               children: [
-                const Icon(
-                  Icons.schedule_outlined,
-                  size: 18,
-                ),
+                const Icon(Icons.schedule_outlined, size: 18),
 
                 const SizedBox(width: 6),
 
-                Text(
-                  '$dateText · $timeText',
-                ),
+                Text('$dateText · $timeText'),
               ],
             ),
 
             // =========================
             // If the helper cancels
             // =========================
-            if (task.status ==
-                RequestStatus.cancelled) ...[
+            if (task.status == RequestStatus.cancelled) ...[
               const SizedBox(height: 12),
 
               const Text(
                 'Cancelled by requester',
                 style: TextStyle(
                   color: Colors.grey,
-                  fontStyle:
-                      FontStyle.italic,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
             ],
@@ -360,12 +526,48 @@ class _TaskCard extends StatelessWidget {
             if (task.note != null) ...[
               const SizedBox(height: 12),
 
-              Text(
-                task.note!,
-                style: const TextStyle(
-                  color: Colors.grey,
+              Text(task.note!, style: const TextStyle(color: Colors.grey)),
+            ],
+
+            if (task.status == RequestStatus.accepted) ...[
+              const SizedBox(height: 16),
+
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    _completeTask(context);
+                  },
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('Complete Task'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ),
+            ],
+
+            if (task.status == RequestStatus.completed) ...[
+              const SizedBox(height: 16),
+
+              if (task.buddyRating == null)
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      _submitFeedback(context);
+                    },
+                    icon: const Icon(Icons.star_outline),
+                    label: const Text('Leave Feedback'),
+                  ),
+                )
+              else
+                _FeedbackSummary(
+                  title: 'Your feedback',
+                  rating: task.buddyRating!,
+                  comment: task.buddyFeedback,
+                ),
             ],
           ],
         ),
@@ -373,12 +575,11 @@ class _TaskCard extends StatelessWidget {
     );
   }
 }
+
 class _TaskStatusChip extends StatelessWidget {
   final RequestStatus status;
 
-  const _TaskStatusChip({
-    required this.status,
-  });
+  const _TaskStatusChip({required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -402,8 +603,53 @@ class _TaskStatusChip extends StatelessWidget {
         break;
     }
 
-    return Chip(
-      label: Text(text),
+    return Chip(label: Text(text));
+  }
+}
+
+class _FeedbackSummary extends StatelessWidget {
+  final String title;
+  final int rating;
+  final String? comment;
+
+  const _FeedbackSummary({
+    required this.title,
+    required this.rating,
+    this.comment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanComment = comment?.trim();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Row(
+            children: List.generate(5, (index) {
+              return Icon(
+                index < rating ? Icons.star : Icons.star_border,
+                size: 18,
+                color: Colors.amber,
+              );
+            }),
+          ),
+          if (cleanComment != null && cleanComment.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(cleanComment),
+          ],
+        ],
+      ),
     );
   }
 }
