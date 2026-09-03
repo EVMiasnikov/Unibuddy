@@ -54,7 +54,8 @@ class User {
   final String? name;
   final String? surname;
   final String? university;
-  final String? city; // TODO: replace with a real place lookup later
+  final String? country; // one of kStandardizedCountries (lib/data/countries.dart)
+  final String? city; // one of kCitiesByCountry[country] (lib/data/cities.dart)
   final AcademicPosition? position;
   final int? age;
   final String? photoUrl;
@@ -71,6 +72,7 @@ class User {
     this.name,
     this.surname,
     this.university,
+    this.country,
     this.city,
     this.position,
     this.age,
@@ -90,6 +92,7 @@ class User {
     String? name,
     String? surname,
     String? university,
+    String? country,
     String? city,
     AcademicPosition? position,
     int? age,
@@ -104,6 +107,7 @@ class User {
       name: name ?? this.name,
       surname: surname ?? this.surname,
       university: university ?? this.university,
+      country: country ?? this.country,
       city: city ?? this.city,
       position: position ?? this.position,
       age: age ?? this.age,
@@ -121,6 +125,7 @@ class User {
       'name': name,
       'surname': surname,
       'university': university,
+      'country': country,
       'city': city,
       'position': position?.name, // store enum as its string name
       'age': age,
@@ -139,6 +144,7 @@ class User {
       name: map['name'] as String?,
       surname: map['surname'] as String?,
       university: map['university'] as String?,
+      country: map['country'] as String?,
       city: map['city'] as String?,
       position: _positionFromString(map['position'] as String?),
       age: map['age'] as int?,

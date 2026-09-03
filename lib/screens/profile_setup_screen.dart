@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/profile_controller.dart';
+import '../data/cities.dart';
+import '../data/countries.dart';
 import '../models/user.dart';
 import '../widgets/primary_button.dart';
 import 'main_screen.dart';
@@ -24,8 +26,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _nameController = TextEditingController();
   final _surnameController = TextEditingController();
   final _universityController = TextEditingController();
-  final _cityController = TextEditingController(); // TODO: swap for a place picker later
   final _ageController = TextEditingController();
+
+  // Country narrows which cities are offered below (see kCitiesByCountry),
+  // and both are picked from fixed lists rather than typed freely, so
+  // buddy search's city matching never sees two different spellings of
+  // the same place.
+  String? _selectedCountry;
+  String? _selectedCity;
 
   AcademicPosition? _position;
   Sex? _sex;
@@ -40,7 +48,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     _nameController.dispose();
     _surnameController.dispose();
     _universityController.dispose();
-    _cityController.dispose();
     _ageController.dispose();
     super.dispose();
   }
@@ -65,7 +72,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       name: _nameController.text.trim(),
       surname: _surnameController.text.trim(),
       university: _universityController.text.trim(),
-      city: _cityController.text.trim(),
+      country: _selectedCountry,
+      city: _selectedCity,
       position: _position,
       age: int.tryParse(_ageController.text.trim()),
       languages: _selectedLanguages.toList(),
@@ -130,11 +138,81 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Placeholder text field for now - swap for a place/geo picker later.
-              TextFormField(
-                controller: _cityController,
-                decoration: const InputDecoration(labelText: 'City', border: OutlineInputBorder()),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              DropdownButtonFormField<String>(
+                initialValue: _selectedCountry,
+                decoration: const InputDecoration(labelText: 'Country', border: OutlineInputBorder()),
+                items: kStandardizedCountries
+                    .map((country) => DropdownMenuItem(value: country, child: Text(country)))
+                    .toList(),
+                onChanged: (v) => setState(() {
+                  _selectedCountry = v;
+                  _selectedCity = null; // city list depends on country - drop any earlier pick
+                }),
+                validator: (v) => v == null ? 'Required' : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Keyed on the country so picking a different country resets
+              // this field's internal text instead of keeping a city from
+              // the previous country's list.
+              Autocomplete<String>(
+                key: ValueKey(_selectedCountry),
+                initialValue: TextEditingValue(text: _selectedCity ?? ''),
+                optionsBuilder: (textEditingValue) {
+                  final cities = kCitiesByCountry[_selectedCountry] ?? const [];
+                  final query = textEditingValue.text.trim().toLowerCase();
+                  if (query.isEmpty) return cities;
+                  return cities.where((city) => city.toLowerCase().contains(query));
+                },
+                onSelected: (city) => setState(() => _selectedCity = city),
+                fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                  return TextFormField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    decoration: InputDecoration(
+                      labelText: 'City',
+                      border: const OutlineInputBorder(),
+                      helperText: _selectedCountry == null
+                          ? 'Select a country first'
+                          : 'Pick from the list so buddy search can match you',
+                    ),
+                    onChanged: (v) {
+                      // Typing invalidates any earlier pick until it's re-selected from the list.
+                      if (_selectedCity != v) setState(() => _selectedCity = null);
+                    },
+                    validator: (v) {
+                      if (_selectedCountry == null) return 'Select a country first';
+                      if (v == null || v.trim().isEmpty) return 'Required';
+                      if (!kCitiesByCountry[_selectedCountry]!.contains(v.trim())) {
+                        return 'Select a city from the list';
+                      }
+                      return null;
+                    },
+                  );
+                },
+                optionsViewBuilder: (context, onSelected, options) {
+                  return Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      elevation: 4,
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width - 48,
+                        height: 200,
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          itemCount: options.length,
+                          itemBuilder: (context, index) {
+                            final city = options.elementAt(index);
+                            return ListTile(
+                              title: Text(city),
+                              onTap: () => onSelected(city),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 16),
 

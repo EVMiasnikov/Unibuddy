@@ -192,6 +192,20 @@ class _ProfileViewScreenState
             value:
                 user.university!,
           ),
+        
+        // =============================
+        // Country
+        // =============================
+
+        if (user.country != null &&
+            user.country!.isNotEmpty)
+          _ProfileRow(
+            icon:
+                Icons.public_outlined,
+            title: 'Country',
+            value:
+                user.country!,
+          ),
 
         // =============================
         // City
