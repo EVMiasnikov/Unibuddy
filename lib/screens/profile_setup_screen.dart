@@ -61,7 +61,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     _nameController.text = user.name ?? '';
     _surnameController.text = user.surname ?? '';
     _universityController.text = user.university ?? '';
-    _cityController.text = user.city ?? '';
+    _selectedCountry = user.country;
+    _selectedCity = user.city;
     _ageController.text = user.age?.toString() ?? '';
     _position = user.position;
     _sex = user.sex;
