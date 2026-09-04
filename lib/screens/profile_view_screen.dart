@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../controllers/auth_controller.dart';
+import '../models/profile_review.dart';
 import '../models/user.dart';
+import '../services/review_service.dart';
 import '../services/user_service.dart';
 import '../widgets/main_bottom_bar.dart';
 import 'profile_setup_screen.dart';
+import 'reviews_screen.dart';
 
 class ProfileViewScreen extends StatefulWidget {
   final String userId;
@@ -21,9 +25,16 @@ class ProfileViewScreen extends StatefulWidget {
 
 class _ProfileViewScreenState
     extends State<ProfileViewScreen> {
-  final UserService _userService = UserService();
+  final UserService _userService =
+      UserService();
+
+  final ReviewService _reviewService =
+      ReviewService();
 
   User? _user;
+
+  List<ProfileReview> _reviews = [];
+
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -36,19 +47,39 @@ class _ProfileViewScreenState
 
   Future<void> _loadProfile() async {
     try {
-      final user = await _userService.getProfile(
+      final user =
+          await _userService.getProfile(
         widget.userId,
         '',
       );
 
-      if (!mounted) return;
+      // Review failure should not prevent
+      // the basic profile from opening.
+      List<ProfileReview> reviews = [];
+
+      try {
+        reviews =
+            await _reviewService
+                .getReviewsForUser(
+          widget.userId,
+        );
+      } catch (_) {
+        reviews = [];
+      }
+
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _user = user;
+        _reviews = reviews;
         _isLoading = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _errorMessage = e
@@ -65,29 +96,58 @@ class _ProfileViewScreenState
 
   Future<void> _editProfile() async {
     await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ProfileSetupScreen()),
+      MaterialPageRoute(
+        builder: (_) =>
+            const ProfileSetupScreen(),
+      ),
     );
-    // The edit screen saves directly to Firestore - reload so this
-    // screen reflects whatever changed.
-    if (!mounted) return;
+
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
+
     _loadProfile();
+  }
+
+  double get _averageRating {
+    if (_reviews.isEmpty) {
+      return 0;
+    }
+
+    final total = _reviews.fold<int>(
+      0,
+      (sum, review) =>
+          sum + review.rating,
+    );
+
+    return total / _reviews.length;
   }
 
   @override
   Widget build(BuildContext context) {
-    final isOwnProfile = context.watch<AuthController>().currentUser?.id == widget.userId;
+    final isOwnProfile =
+        context
+                .watch<AuthController>()
+                .currentUser
+                ?.id ==
+            widget.userId;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title:
+            const Text('Profile'),
+
         actions: [
           if (isOwnProfile)
             IconButton(
-              icon: const Icon(Icons.edit_outlined),
+              icon: const Icon(
+                Icons.edit_outlined,
+              ),
               tooltip: 'Edit profile',
               onPressed: _editProfile,
             ),
@@ -95,21 +155,25 @@ class _ProfileViewScreenState
       ),
 
       body: _buildBody(),
-      bottomNavigationBar: const MainBottomBar(),
+
+      bottomNavigationBar:
+          const MainBottomBar(),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child:
+            CircularProgressIndicator(),
       );
     }
 
     if (_errorMessage != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding:
+              const EdgeInsets.all(24),
 
           child: Column(
             mainAxisAlignment:
@@ -125,7 +189,8 @@ class _ProfileViewScreenState
 
               Text(
                 _errorMessage!,
-                textAlign: TextAlign.center,
+                textAlign:
+                    TextAlign.center,
               ),
 
               const SizedBox(height: 16),
@@ -139,7 +204,11 @@ class _ProfileViewScreenState
 
                   _loadProfile();
                 },
-                child: const Text('Try again'),
+
+                child:
+                    const Text(
+                  'Try again',
+                ),
               ),
             ],
           ),
@@ -158,7 +227,8 @@ class _ProfileViewScreenState
     final user = _user!;
 
     return ListView(
-      padding: const EdgeInsets.all(24),
+      padding:
+          const EdgeInsets.all(24),
 
       children: [
         // =============================
@@ -198,9 +268,11 @@ class _ProfileViewScreenState
                 ? user.fullName
                 : 'User',
 
-            style: const TextStyle(
+            style:
+                const TextStyle(
               fontSize: 24,
-              fontWeight: FontWeight.bold,
+              fontWeight:
+                  FontWeight.bold,
             ),
           ),
         ),
@@ -212,7 +284,8 @@ class _ProfileViewScreenState
         // =============================
 
         if (user.university != null &&
-            user.university!.isNotEmpty)
+            user.university!
+                .isNotEmpty)
           _ProfileRow(
             icon:
                 Icons.school_outlined,
@@ -220,7 +293,7 @@ class _ProfileViewScreenState
             value:
                 user.university!,
           ),
-        
+
         // =============================
         // Country
         // =============================
@@ -257,7 +330,8 @@ class _ProfileViewScreenState
           _ProfileRow(
             icon:
                 Icons.badge_outlined,
-            title: 'Academic position',
+            title:
+                'Academic position',
             value:
                 user.position!.label,
           ),
@@ -292,14 +366,17 @@ class _ProfileViewScreenState
         // Languages
         // =============================
 
-        if (user.languages.isNotEmpty) ...[
+        if (user.languages
+            .isNotEmpty) ...[
           const SizedBox(height: 20),
 
           const Text(
             'Languages',
-            style: TextStyle(
+            style:
+                TextStyle(
               fontSize: 17,
-              fontWeight: FontWeight.bold,
+              fontWeight:
+                  FontWeight.bold,
             ),
           ),
 
@@ -320,6 +397,102 @@ class _ProfileViewScreenState
             ).toList(),
           ),
         ],
+
+        // =====================================================
+        // REVIEWS
+        // =====================================================
+
+        const SizedBox(height: 28),
+
+        const Divider(),
+
+        const SizedBox(height: 18),
+
+        const Text(
+          'Reviews',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight:
+                FontWeight.bold,
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        if (_reviews.isEmpty)
+          const Text(
+            'No reviews yet.',
+            style: TextStyle(
+              color: Colors.grey,
+            ),
+          )
+        else
+          Row(
+            children: [
+              const Icon(
+                Icons.star,
+                size: 24,
+              ),
+
+              const SizedBox(width: 6),
+
+              Text(
+                _averageRating
+                    .toStringAsFixed(1),
+
+                style:
+                    const TextStyle(
+                  fontSize: 19,
+                  fontWeight:
+                      FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              Text(
+                '· ${_reviews.length} '
+                '${_reviews.length == 1 ? 'review' : 'reviews'}',
+
+                style:
+                    const TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+
+        const SizedBox(height: 12),
+
+        SizedBox(
+          width: double.infinity,
+
+          child: OutlinedButton.icon(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      ReviewsScreen(
+                    userId:
+                        widget.userId,
+                  ),
+                ),
+              );
+            },
+
+            icon: const Icon(
+              Icons.reviews_outlined,
+            ),
+
+            label:
+                const Text(
+              'View Reviews',
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -368,7 +541,8 @@ class _ProfileRow
                   style:
                       const TextStyle(
                     fontSize: 12,
-                    color: Colors.grey,
+                    color:
+                        Colors.grey,
                   ),
                 ),
 

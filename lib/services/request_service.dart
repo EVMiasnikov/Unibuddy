@@ -264,6 +264,11 @@ class RequestService {
   // SUBMIT FEEDBACK
   // =========================================================
 
+    // =========================================================
+  // SUBMIT FEEDBACK
+  // =========================================================
+
+  /// Requester leaves feedback for the buddy.
   Future<void> submitRequesterFeedback({
     required String requestId,
     required int rating,
@@ -275,9 +280,11 @@ class RequestService {
       feedback: feedback,
       ratingField: 'requesterRating',
       feedbackField: 'requesterFeedback',
+      feedbackAtField: 'requesterFeedbackAt',
     );
   }
 
+  /// Buddy leaves feedback for the requester.
   Future<void> submitBuddyFeedback({
     required String requestId,
     required int rating,
@@ -289,6 +296,7 @@ class RequestService {
       feedback: feedback,
       ratingField: 'buddyRating',
       feedbackField: 'buddyFeedback',
+      feedbackAtField: 'buddyFeedbackAt',
     );
   }
 
@@ -298,32 +306,65 @@ class RequestService {
     required String feedback,
     required String ratingField,
     required String feedbackField,
+    required String feedbackAtField,
   }) async {
-    final reference = _requests.doc(requestId);
+    // Extra protection in case this method is called
+    // from somewhere other than the current UI.
+    if (rating < 1 || rating > 5) {
+      throw Exception(
+        'Rating must be between 1 and 5.',
+      );
+    }
+
+    final reference =
+        _requests.doc(requestId);
 
     await _db
         .runTransaction((transaction) async {
-          final snapshot = await transaction.get(reference);
+          final snapshot =
+              await transaction.get(reference);
 
           final data = snapshot.data();
 
-          if (!snapshot.exists || data == null) {
-            throw Exception('This request no longer exists.');
+          if (!snapshot.exists ||
+              data == null) {
+            throw Exception(
+              'This request no longer exists.',
+            );
           }
 
-          if (data['status'] != RequestStatus.completed.name) {
-            throw Exception('Feedback can only be added after completion.');
+          // Feedback is available only after
+          // the requester marks the request completed.
+          if (data['status'] !=
+              RequestStatus.completed.name) {
+            throw Exception(
+              'Feedback can only be added after completion.',
+            );
           }
 
+          // One feedback per side per request.
           if (data[ratingField] != null) {
-            throw Exception('Feedback has already been submitted.');
+            throw Exception(
+              'Feedback has already been submitted.',
+            );
           }
 
-          transaction.update(reference, {
-            ratingField: rating,
-            feedbackField: feedback.trim(),
-          });
+          transaction.update(
+            reference,
+            {
+              ratingField: rating,
+              feedbackField:
+                  feedback.trim(),
+
+              // Use Firestore server time instead
+              // of the user's device clock.
+              feedbackAtField:
+                  FieldValue.serverTimestamp(),
+            },
+          );
         })
-        .timeout(const Duration(seconds: 10));
+        .timeout(
+          const Duration(seconds: 10),
+        );
   }
 }

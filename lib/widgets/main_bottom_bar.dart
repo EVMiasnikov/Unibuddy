@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../controllers/auth_controller.dart';
 import 'main_action_button.dart';
-
 import '../screens/chat_screen.dart';
-import '../screens/main_screen.dart';
 import '../screens/my_requests_screen.dart';
 import '../screens/my_tasks_screen.dart';
 import '../screens/offers_screen.dart';

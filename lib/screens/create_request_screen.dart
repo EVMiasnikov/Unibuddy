@@ -5,34 +5,27 @@ import '../controllers/auth_controller.dart';
 import '../controllers/request_controller.dart';
 import '../models/buddy_request.dart';
 import '../services/buddy_search_service.dart';
-import 'buddy_search_screen.dart';
-import 'profile_view_screen.dart';
+import '../widgets/global_location_picker.dart';
 import '../widgets/main_bottom_bar.dart';
 
-class CreateRequestScreen
-    extends StatefulWidget {
+import 'buddy_search_screen.dart';
+import 'profile_view_screen.dart';
+
+class CreateRequestScreen extends StatefulWidget {
   const CreateRequestScreen({
     super.key,
   });
 
   @override
-  State<CreateRequestScreen>
-      createState() =>
-          _CreateRequestScreenState();
+  State<CreateRequestScreen> createState() =>
+      _CreateRequestScreenState();
 }
 
 class _CreateRequestScreenState
     extends State<CreateRequestScreen> {
-  final _formKey =
-      GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
   final _customHelpController =
-      TextEditingController();
-
-  final _countryController =
-      TextEditingController();
-
-  final _cityController =
       TextEditingController();
 
   final _noteController =
@@ -43,14 +36,21 @@ class _CreateRequestScreenState
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
 
-  BuddySearchResult?
-      _selectedBuddy;
+  // =========================================================
+  // GLOBAL LOCATION
+  // =========================================================
+
+  LocationSelection? _selectedLocation;
+
+  // =========================================================
+  // SPECIFIC BUDDY
+  // =========================================================
+
+  BuddySearchResult? _selectedBuddy;
 
   @override
   void dispose() {
     _customHelpController.dispose();
-    _countryController.dispose();
-    _cityController.dispose();
     _noteController.dispose();
 
     super.dispose();
@@ -63,11 +63,9 @@ class _CreateRequestScreenState
   Future<void> _selectDate() async {
     final now = DateTime.now();
 
-    final date =
-        await showDatePicker(
+    final date = await showDatePicker(
       context: context,
-      initialDate:
-          _selectedDate ?? now,
+      initialDate: _selectedDate ?? now,
       firstDate: now,
       lastDate: DateTime(
         now.year + 2,
@@ -86,12 +84,10 @@ class _CreateRequestScreenState
   // =========================================================
 
   Future<void> _selectTime() async {
-    final time =
-        await showTimePicker(
+    final time = await showTimePicker(
       context: context,
       initialTime:
-          _selectedTime ??
-              TimeOfDay.now(),
+          _selectedTime ?? TimeOfDay.now(),
     );
 
     if (time != null) {
@@ -105,17 +101,14 @@ class _CreateRequestScreenState
   // SEARCH SPECIFIC BUDDY
   // =========================================================
 
-  Future<void>
-      _selectSpecificBuddy() async {
-    final city =
-        _cityController.text.trim();
+  Future<void> _selectSpecificBuddy() async {
+    final location = _selectedLocation;
 
-    if (city.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+    if (location == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Please enter the city before searching for a buddy.',
+            'Please select a country and city before searching for a buddy.',
           ),
         ),
       );
@@ -124,9 +117,7 @@ class _CreateRequestScreenState
     }
 
     final user =
-        context
-            .read<AuthController>()
-            .currentUser;
+        context.read<AuthController>().currentUser;
 
     if (user == null) {
       return;
@@ -136,17 +127,14 @@ class _CreateRequestScreenState
         await Navigator.of(context)
             .push<BuddySearchResult>(
       MaterialPageRoute(
-        builder: (_) =>
-            BuddySearchScreen(
-          city: city,
-          currentUserId:
-              user.id,
+        builder: (_) => BuddySearchScreen(
+          city: location.city,
+          currentUserId: user.id,
         ),
       ),
     );
 
-    if (!mounted ||
-        buddy == null) {
+    if (!mounted || buddy == null) {
       return;
     }
 
@@ -160,14 +148,12 @@ class _CreateRequestScreenState
   // =========================================================
 
   Future<void> _createRequest() async {
-    if (!_formKey.currentState!
-        .validate()) {
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
     if (_selectedHelpType == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Please select a help type.',
@@ -178,10 +164,22 @@ class _CreateRequestScreenState
       return;
     }
 
+    // Country + City 必须通过统一 Picker 选择
+    if (_selectedLocation == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please select a country and city.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
     if (_selectedDate == null ||
         _selectedTime == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Please select date and time.',
@@ -193,16 +191,13 @@ class _CreateRequestScreenState
     }
 
     final user =
-        context
-            .read<AuthController>()
-            .currentUser;
+        context.read<AuthController>().currentUser;
 
     if (user == null) {
       return;
     }
 
-    final requestDateTime =
-        DateTime(
+    final requestDateTime = DateTime(
       _selectedDate!.year,
       _selectedDate!.month,
       _selectedDate!.day,
@@ -211,64 +206,46 @@ class _CreateRequestScreenState
     );
 
     final customHelp =
-        _customHelpController
-            .text
-            .trim();
+        _customHelpController.text.trim();
 
     final note =
-        _noteController
-            .text
-            .trim();
+        _noteController.text.trim();
 
-    final request =
-        BuddyRequest(
-      requesterId:
-          user.id,
+    final location = _selectedLocation!;
 
-      requesterName:
-          user.fullName,
+    final request = BuddyRequest(
+      requesterId: user.id,
 
-      helpType:
-          _selectedHelpType!,
+      requesterName: user.fullName,
+
+      helpType: _selectedHelpType!,
 
       customHelp:
-          _selectedHelpType ==
-                  HelpType.other
+          _selectedHelpType == HelpType.other
               ? customHelp
               : null,
 
-      note:
-          note.isEmpty
-              ? null
-              : note,
+      note: note.isEmpty ? null : note,
 
-      country:
-          _countryController
-              .text
-              .trim(),
+      // =====================================================
+      // GLOBAL LOCATION
+      // =====================================================
 
-      city:
-          _cityController
-              .text
-              .trim(),
+      country: location.country,
 
-      dateTime:
-          requestDateTime,
+      city: location.city,
 
-      // Key point:
+      dateTime: requestDateTime,
+
       // Unselected = null
-      // Selected = other user's UID
-      targetBuddyId:
-          _selectedBuddy?.id,
+      // Selected = specific buddy UID
+      targetBuddyId: _selectedBuddy?.id,
 
-      acceptedBuddyId:
-          null,
+      acceptedBuddyId: null,
 
-      status:
-          RequestStatus.pending,
+      status: RequestStatus.pending,
 
-      createdAt:
-          DateTime.now(),
+      createdAt: DateTime.now(),
     );
 
     final success =
@@ -283,8 +260,7 @@ class _CreateRequestScreenState
     }
 
     if (success) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Request created successfully.',
@@ -292,21 +268,17 @@ class _CreateRequestScreenState
         ),
       );
 
-      Navigator.of(context)
-          .pop(true);
+      Navigator.of(context).pop(true);
     } else {
       final error =
           context
-                  .read<
-                      RequestController>()
+                  .read<RequestController>()
                   .errorMessage ??
               'Failed to create request.';
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text(error),
+          content: Text(error),
         ),
       );
     }
@@ -315,13 +287,11 @@ class _CreateRequestScreenState
   @override
   Widget build(BuildContext context) {
     final requestController =
-        context
-            .watch<RequestController>();
+        context.watch<RequestController>();
 
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text(
+        title: const Text(
           'Create Request',
         ),
       ),
@@ -330,10 +300,7 @@ class _CreateRequestScreenState
         key: _formKey,
 
         child: ListView(
-          padding:
-              const EdgeInsets.all(
-            20,
-          ),
+          padding: const EdgeInsets.all(20),
 
           children: [
             // =================================================
@@ -343,22 +310,17 @@ class _CreateRequestScreenState
             DropdownButtonFormField<HelpType>(
               initialValue: _selectedHelpType,
 
-              decoration:
-                  const InputDecoration(
-                labelText:
-                    'Help type *',
-                border:
-                    OutlineInputBorder(),
+              decoration: const InputDecoration(
+                labelText: 'Help type *',
+                border: OutlineInputBorder(),
               ),
 
               items:
-                  HelpType.values
-                      .map(
+                  HelpType.values.map(
                 (type) {
                   return DropdownMenuItem(
                     value: type,
-                    child:
-                        Text(
+                    child: Text(
                       type.label,
                     ),
                   );
@@ -367,8 +329,7 @@ class _CreateRequestScreenState
 
               onChanged: (value) {
                 setState(() {
-                  _selectedHelpType =
-                      value;
+                  _selectedHelpType = value;
                 });
               },
 
@@ -387,30 +348,23 @@ class _CreateRequestScreenState
 
             if (_selectedHelpType ==
                 HelpType.other) ...[
-              const SizedBox(
-                height: 16,
-              ),
+              const SizedBox(height: 16),
 
               TextFormField(
                 controller:
                     _customHelpController,
 
-                decoration:
-                    const InputDecoration(
+                decoration: const InputDecoration(
                   labelText:
                       'What help do you need? *',
-                  border:
-                      OutlineInputBorder(),
+                  border: OutlineInputBorder(),
                 ),
 
                 validator: (value) {
                   if (_selectedHelpType ==
-                          HelpType
-                              .other &&
+                          HelpType.other &&
                       (value == null ||
-                          value
-                              .trim()
-                              .isEmpty)) {
+                          value.trim().isEmpty)) {
                     return 'Please describe the help you need.';
                   }
 
@@ -419,97 +373,54 @@ class _CreateRequestScreenState
               ),
             ],
 
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 20),
 
             // =================================================
-            // COUNTRY
+            // GLOBAL COUNTRY + CITY PICKER
             // =================================================
 
-            TextFormField(
-              controller:
-                  _countryController,
-
-              decoration:
-                  const InputDecoration(
-                labelText:
-                    'Country *',
-                border:
-                    OutlineInputBorder(),
+            const Text(
+              'Location',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
               ),
-
-              validator: (value) {
-                if (value == null ||
-                    value
-                        .trim()
-                        .isEmpty) {
-                  return 'Please enter the country.';
-                }
-
-                return null;
-              },
             ),
 
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 6),
 
-            // =================================================
-            // CITY
-            // =================================================
-
-            TextFormField(
-              controller:
-                  _cityController,
-
-              decoration:
-                  const InputDecoration(
-                labelText:
-                    'City *',
-                border:
-                    OutlineInputBorder(),
+            const Text(
+              'Select the location where you need help.',
+              style: TextStyle(
+                color: Colors.grey,
               ),
+            ),
 
-              onChanged: (value) {
-                if (_selectedBuddy !=
-                    null) {
-                  final selectedCity =
-                      _selectedBuddy
-                          ?.city
-                          ?.trim()
-                          .toLowerCase();
+            const SizedBox(height: 12),
 
-                  final newCity =
-                      value
-                          .trim()
-                          .toLowerCase();
+            GlobalLocationPicker(
+              onChanged: (location) {
+                final oldLocation =
+                    _selectedLocation;
 
-                  if (selectedCity !=
-                      newCity) {
-                    setState(() {
-                      _selectedBuddy =
-                          null;
-                    });
+                final locationChanged =
+                    oldLocation?.countryCode !=
+                            location?.countryCode ||
+                        oldLocation?.city !=
+                            location?.city;
+
+                setState(() {
+                  _selectedLocation =
+                      location;
+
+                  if (locationChanged) {
+                    _selectedBuddy = null;
                   }
-                }
-              },
-
-              validator: (value) {
-                if (value == null ||
-                    value
-                        .trim()
-                        .isEmpty) {
-                  return 'Please enter the city.';
-                }
-
-                return null;
+                });
               },
             ),
 
-            const SizedBox(
-              height: 24,
-            ),
+            const SizedBox(height: 24),
 
             // =================================================
             // SPECIFIC BUDDY
@@ -520,8 +431,7 @@ class _CreateRequestScreenState
                 const Expanded(
                   child: Text(
                     'Specific Buddy',
-                    style:
-                        TextStyle(
+                    style: TextStyle(
                       fontSize: 17,
                       fontWeight:
                           FontWeight.bold,
@@ -531,12 +441,9 @@ class _CreateRequestScreenState
 
                 Text(
                   'Optional',
-                  style:
-                      TextStyle(
+                  style: TextStyle(
                     color:
-                        Theme.of(
-                          context,
-                        )
+                        Theme.of(context)
                             .colorScheme
                             .primary,
                   ),
@@ -544,34 +451,27 @@ class _CreateRequestScreenState
               ],
             ),
 
-            const SizedBox(
-              height: 6,
-            ),
+            const SizedBox(height: 6),
 
             const Text(
-              'Leave this empty to make the request visible to all buddies in the selected city.',
+              'Leave this empty to make the request visible to all available buddies in the selected city.',
               style: TextStyle(
                 color: Colors.grey,
               ),
             ),
 
-            const SizedBox(
-              height: 12,
-            ),
+            const SizedBox(height: 12),
 
-            if (_selectedBuddy ==
-                null)
+            if (_selectedBuddy == null)
               OutlinedButton.icon(
                 onPressed:
                     _selectSpecificBuddy,
 
-                icon:
-                    const Icon(
+                icon: const Icon(
                   Icons.person_search,
                 ),
 
-                label:
-                    const Text(
+                label: const Text(
                   'Search Buddy',
                 ),
               )
@@ -579,10 +479,7 @@ class _CreateRequestScreenState
               Card(
                 child: Padding(
                   padding:
-                      const EdgeInsets
-                          .all(
-                    14,
-                  ),
+                      const EdgeInsets.all(14),
 
                   child: Row(
                     children: [
@@ -615,9 +512,7 @@ class _CreateRequestScreenState
                                 : null,
                       ),
 
-                      const SizedBox(
-                        width: 12,
-                      ),
+                      const SizedBox(width: 12),
 
                       Expanded(
                         child: Column(
@@ -633,8 +528,7 @@ class _CreateRequestScreenState
                               style:
                                   const TextStyle(
                                 fontWeight:
-                                    FontWeight
-                                        .bold,
+                                    FontWeight.bold,
                               ),
                             ),
 
@@ -645,6 +539,18 @@ class _CreateRequestScreenState
                                 _selectedBuddy!
                                     .university!,
                               ),
+
+                            if (_selectedBuddy!
+                                    .city !=
+                                null)
+                              Text(
+                                _selectedBuddy!.city!,
+                                style:
+                                    const TextStyle(
+                                  color:
+                                      Colors.grey,
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -654,9 +560,7 @@ class _CreateRequestScreenState
                             'View profile',
 
                         onPressed: () {
-                          Navigator.of(
-                            context,
-                          ).push(
+                          Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) =>
                                   ProfileViewScreen(
@@ -668,16 +572,14 @@ class _CreateRequestScreenState
                           );
                         },
 
-                        icon:
-                            const Icon(
+                        icon: const Icon(
                           Icons
                               .account_circle_outlined,
                         ),
                       ),
 
                       IconButton(
-                        tooltip:
-                            'Remove',
+                        tooltip: 'Remove',
 
                         onPressed: () {
                           setState(() {
@@ -686,8 +588,7 @@ class _CreateRequestScreenState
                           });
                         },
 
-                        icon:
-                            const Icon(
+                        icon: const Icon(
                           Icons.close,
                         ),
                       ),
@@ -696,89 +597,66 @@ class _CreateRequestScreenState
                 ),
               ),
 
-            const SizedBox(
-              height: 24,
-            ),
+            const SizedBox(height: 24),
 
             // =================================================
             // DATE
             // =================================================
 
             OutlinedButton.icon(
-              onPressed:
-                  _selectDate,
+              onPressed: _selectDate,
 
-              icon:
-                  const Icon(
-                Icons
-                    .calendar_today_outlined,
+              icon: const Icon(
+                Icons.calendar_today_outlined,
               ),
 
               label: Text(
-                _selectedDate ==
-                        null
+                _selectedDate == null
                     ? 'Select date *'
                     : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
               ),
             ),
 
-            const SizedBox(
-              height: 12,
-            ),
+            const SizedBox(height: 12),
 
             // =================================================
             // TIME
             // =================================================
 
             OutlinedButton.icon(
-              onPressed:
-                  _selectTime,
+              onPressed: _selectTime,
 
-              icon:
-                  const Icon(
-                Icons
-                    .schedule_outlined,
+              icon: const Icon(
+                Icons.schedule_outlined,
               ),
 
               label: Text(
-                _selectedTime ==
-                        null
+                _selectedTime == null
                     ? 'Select time *'
                     : _selectedTime!
-                        .format(
-                          context,
-                        ),
+                        .format(context),
               ),
             ),
 
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 16),
 
             // =================================================
             // NOTE
             // =================================================
 
             TextFormField(
-              controller:
-                  _noteController,
+              controller: _noteController,
 
               maxLines: 4,
 
-              decoration:
-                  const InputDecoration(
-                labelText:
-                    'Additional note',
-                alignLabelWithHint:
-                    true,
-                border:
-                    OutlineInputBorder(),
+              decoration: const InputDecoration(
+                labelText: 'Additional note',
+                alignLabelWithHint: true,
+                border: OutlineInputBorder(),
               ),
             ),
 
-            const SizedBox(
-              height: 24,
-            ),
+            const SizedBox(height: 24),
 
             // =================================================
             // CREATE
@@ -786,21 +664,18 @@ class _CreateRequestScreenState
 
             FilledButton(
               onPressed:
-                  requestController
-                          .isLoading
+                  requestController.isLoading
                       ? null
                       : _createRequest,
 
               child:
-                  requestController
-                          .isLoading
+                  requestController.isLoading
                       ? const SizedBox(
                           width: 20,
                           height: 20,
                           child:
                               CircularProgressIndicator(
-                            strokeWidth:
-                                2,
+                            strokeWidth: 2,
                           ),
                         )
                       : const Text(
@@ -810,11 +685,9 @@ class _CreateRequestScreenState
           ],
         ),
       ),
-      // ==============================
-      // Quick access - Chat / Browse / My Requests
-      // Docked to the bottom of the screen.
-      // ==============================
-      bottomNavigationBar: const MainBottomBar(),
+
+      bottomNavigationBar:
+          const MainBottomBar(),
     );
   }
 }

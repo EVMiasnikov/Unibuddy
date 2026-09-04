@@ -1,73 +1,110 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+
 import '../controllers/auth_controller.dart';
 import '../controllers/profile_controller.dart';
-import '../data/cities.dart';
-import '../data/countries.dart';
 import '../models/user.dart';
+import '../widgets/global_location_picker.dart';
 import '../widgets/primary_button.dart';
 import 'main_screen.dart';
 
 const List<String> kAvailableLanguages = [
-  'English', 'Italian', 'Russian', 'Spanish', 'French', 'German', 'Chinese', 'Other',
+  'English',
+  'Italian',
+  'Russian',
+  'Spanish',
+  'French',
+  'German',
+  'Chinese',
+  'Other',
 ];
 
 class ProfileSetupScreen extends StatefulWidget {
-  const ProfileSetupScreen({super.key});
+  const ProfileSetupScreen({
+    super.key,
+  });
 
   @override
-  State<ProfileSetupScreen> createState() => _ProfileSetupScreenState();
+  State<ProfileSetupScreen> createState() =>
+      _ProfileSetupScreenState();
 }
 
-class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
+class _ProfileSetupScreenState
+    extends State<ProfileSetupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _surnameController = TextEditingController();
-  final _universityController = TextEditingController();
-  final _ageController = TextEditingController();
 
-  // Country narrows which cities are offered below (see kCitiesByCountry),
-  // and both are picked from fixed lists rather than typed freely, so
-  // buddy search's city matching never sees two different spellings of
-  // the same place.
+  final _nameController =
+      TextEditingController();
+
+  final _surnameController =
+      TextEditingController();
+
+  final _universityController =
+      TextEditingController();
+
+  final _ageController =
+      TextEditingController();
+
+  // =========================================================
+  // GLOBAL LOCATION
+  // =========================================================
+
   String? _selectedCountry;
   String? _selectedCity;
 
   AcademicPosition? _position;
   Sex? _sex;
+
   final Set<String> _selectedLanguages = {};
 
-  // Raw bytes work on web, mobile, and desktop alike - unlike dart:io File,
-  // which doesn't exist in a browser.
   Uint8List? _photoBytes;
 
-  // The photo already saved on the account, shown until a new one is picked.
   String? _existingPhotoUrl;
 
-  // True if the user already had a completed profile when this screen
-  // opened - i.e. they're editing, not doing first-time setup.
   bool _isEditing = false;
 
   @override
   void initState() {
     super.initState();
-    final user = context.read<AuthController>().currentUser;
-    if (user == null) return;
+
+    final user =
+        context.read<AuthController>().currentUser;
+
+    if (user == null) {
+      return;
+    }
 
     _isEditing = user.hasCompletedProfile;
 
-    _nameController.text = user.name ?? '';
-    _surnameController.text = user.surname ?? '';
-    _universityController.text = user.university ?? '';
+    _nameController.text =
+        user.name ?? '';
+
+    _surnameController.text =
+        user.surname ?? '';
+
+    _universityController.text =
+        user.university ?? '';
+
+    // Existing location will be passed into the
+    // same GlobalLocationPicker used by Create Request.
     _selectedCountry = user.country;
     _selectedCity = user.city;
-    _ageController.text = user.age?.toString() ?? '';
+
+    _ageController.text =
+        user.age?.toString() ?? '';
+
     _position = user.position;
     _sex = user.sex;
-    _selectedLanguages.addAll(user.languages);
-    _existingPhotoUrl = user.photoUrl;
+
+    _selectedLanguages.addAll(
+      user.languages,
+    );
+
+    _existingPhotoUrl =
+        user.photoUrl;
   }
 
   @override
@@ -76,251 +113,576 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     _surnameController.dispose();
     _universityController.dispose();
     _ageController.dispose();
+
     super.dispose();
   }
 
+  // =========================================================
+  // PHOTO
+  // =========================================================
+
   Future<void> _pickPhoto() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (picked != null) {
-      final bytes = await picked.readAsBytes();
-      setState(() => _photoBytes = bytes);
-    }
-  }
 
-  Future<void> _handleSave() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final authController = context.read<AuthController>();
-    final profileController = context.read<ProfileController>();
-    final baseUser = authController.currentUser!;
-
-    final updatedBaseUser = baseUser.copyWith(
-      name: _nameController.text.trim(),
-      surname: _surnameController.text.trim(),
-      university: _universityController.text.trim(),
-      country: _selectedCountry,
-      city: _selectedCity,
-      position: _position,
-      age: int.tryParse(_ageController.text.trim()),
-      languages: _selectedLanguages.toList(),
-      sex: _sex,
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
     );
 
-    final savedUser = await profileController.saveProfile(updatedBaseUser, photoBytes: _photoBytes);
+    if (picked == null) {
+      return;
+    }
 
-    if (!mounted) return;
-    if (savedUser != null) {
-      authController.setCurrentUser(savedUser);
-      if (_isEditing) {
-        // Came here to edit an existing profile - just return to where we were.
-        Navigator.of(context).pop();
-      } else {
-        // First-time setup - proceed into the app.
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-        );
-      }
+    final bytes =
+        await picked.readAsBytes();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _photoBytes = bytes;
+    });
+  }
+
+  // =========================================================
+  // SAVE PROFILE
+  // =========================================================
+
+  Future<void> _handleSave() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // LocationPicker is shared by Profile and Request,
+    // but it is not itself a TextFormField, so validate here.
+    if (_selectedCountry == null ||
+        _selectedCity == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please select a country and city.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    final authController =
+        context.read<AuthController>();
+
+    final profileController =
+        context.read<ProfileController>();
+
+    final baseUser =
+        authController.currentUser;
+
+    if (baseUser == null) {
+      return;
+    }
+
+    final updatedBaseUser =
+        baseUser.copyWith(
+      name:
+          _nameController.text.trim(),
+
+      surname:
+          _surnameController.text.trim(),
+
+      university:
+          _universityController.text.trim(),
+
+      country:
+          _selectedCountry,
+
+      city:
+          _selectedCity,
+
+      position:
+          _position,
+
+      age:
+          int.tryParse(
+        _ageController.text.trim(),
+      ),
+
+      languages:
+          _selectedLanguages.toList(),
+
+      sex:
+          _sex,
+    );
+
+    final savedUser =
+        await profileController.saveProfile(
+      updatedBaseUser,
+      photoBytes: _photoBytes,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (savedUser == null) {
+      return;
+    }
+
+    authController.setCurrentUser(
+      savedUser,
+    );
+
+    if (_isEditing) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.of(context)
+          .pushReplacement(
+        MaterialPageRoute(
+          builder: (_) =>
+              const MainScreen(),
+        ),
+      );
     }
   }
+
+  // =========================================================
+  // BUILD
+  // =========================================================
 
   @override
   Widget build(BuildContext context) {
-    final profileController = context.watch<ProfileController>();
+    final profileController =
+        context.watch<ProfileController>();
 
     return Scaffold(
-      appBar: AppBar(title: Text(_isEditing ? 'Edit profile' : 'Complete your profile')),
+      appBar: AppBar(
+        title: Text(
+          _isEditing
+              ? 'Edit profile'
+              : 'Complete your profile',
+        ),
+      ),
+
       body: SafeArea(
         child: Form(
           key: _formKey,
+
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding:
+                const EdgeInsets.all(24),
+
             children: [
+              // ===============================================
+              // PHOTO
+              // ===============================================
+
               Center(
                 child: GestureDetector(
                   onTap: _pickPhoto,
+
                   child: CircleAvatar(
                     radius: 48,
-                    backgroundImage: _photoBytes != null
-                        ? MemoryImage(_photoBytes!)
-                        : (_existingPhotoUrl != null ? NetworkImage(_existingPhotoUrl!) : null) as ImageProvider?,
-                    child: (_photoBytes == null && _existingPhotoUrl == null)
-                        ? const Icon(Icons.add_a_photo, size: 32)
-                        : null,
+
+                    backgroundImage:
+                        _photoBytes != null
+                            ? MemoryImage(
+                                _photoBytes!,
+                              )
+                            : (_existingPhotoUrl !=
+                                        null &&
+                                    _existingPhotoUrl!
+                                        .isNotEmpty
+                                ? NetworkImage(
+                                    _existingPhotoUrl!,
+                                  )
+                                : null)
+                                as ImageProvider?,
+
+                    child:
+                        _photoBytes == null &&
+                                (_existingPhotoUrl ==
+                                        null ||
+                                    _existingPhotoUrl!
+                                        .isEmpty)
+                            ? const Icon(
+                                Icons.add_a_photo,
+                                size: 32,
+                              )
+                            : null,
                   ),
                 ),
               ),
+
               const SizedBox(height: 8),
-              const Center(child: Text('Tap to add a photo (optional)')),
+
+              const Center(
+                child: Text(
+                  'Tap to add a photo (optional)',
+                ),
+              ),
+
               const SizedBox(height: 24),
 
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
+              // ===============================================
+              // NAME
+              // ===============================================
 
               TextFormField(
-                controller: _surnameController,
-                decoration: const InputDecoration(labelText: 'Surname', border: OutlineInputBorder()),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
+                controller:
+                    _nameController,
 
-              TextFormField(
-                controller: _universityController,
-                decoration: const InputDecoration(labelText: 'University', border: OutlineInputBorder()),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
+                decoration:
+                    const InputDecoration(
+                  labelText: 'Name',
+                  border:
+                      OutlineInputBorder(),
+                ),
 
-              DropdownButtonFormField<String>(
-                initialValue: _selectedCountry,
-                decoration: const InputDecoration(labelText: 'Country', border: OutlineInputBorder()),
-                items: kStandardizedCountries
-                    .map((country) => DropdownMenuItem(value: country, child: Text(country)))
-                    .toList(),
-                onChanged: (v) => setState(() {
-                  _selectedCountry = v;
-                  _selectedCity = null; // city list depends on country - drop any earlier pick
-                }),
-                validator: (v) => v == null ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
+                validator: (value) {
+                  if (value == null ||
+                      value.trim().isEmpty) {
+                    return 'Required';
+                  }
 
-              // Keyed on the country so picking a different country resets
-              // this field's internal text instead of keeping a city from
-              // the previous country's list.
-              Autocomplete<String>(
-                key: ValueKey(_selectedCountry),
-                initialValue: TextEditingValue(text: _selectedCity ?? ''),
-                optionsBuilder: (textEditingValue) {
-                  final cities = kCitiesByCountry[_selectedCountry] ?? const [];
-                  final query = textEditingValue.text.trim().toLowerCase();
-                  if (query.isEmpty) return cities;
-                  return cities.where((city) => city.toLowerCase().contains(query));
-                },
-                onSelected: (city) => setState(() => _selectedCity = city),
-                fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                  return TextFormField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    decoration: InputDecoration(
-                      labelText: 'City',
-                      border: const OutlineInputBorder(),
-                      helperText: _selectedCountry == null
-                          ? 'Select a country first'
-                          : 'Pick from the list so buddy search can match you',
-                    ),
-                    onChanged: (v) {
-                      // Typing invalidates any earlier pick until it's re-selected from the list.
-                      if (_selectedCity != v) setState(() => _selectedCity = null);
-                    },
-                    validator: (v) {
-                      if (_selectedCountry == null) return 'Select a country first';
-                      if (v == null || v.trim().isEmpty) return 'Required';
-                      if (!kCitiesByCountry[_selectedCountry]!.contains(v.trim())) {
-                        return 'Select a city from the list';
-                      }
-                      return null;
-                    },
-                  );
-                },
-                optionsViewBuilder: (context, onSelected, options) {
-                  return Align(
-                    alignment: Alignment.topLeft,
-                    child: Material(
-                      elevation: 4,
-                      child: SizedBox(
-                        width: MediaQuery.of(context).size.width - 48,
-                        height: 200,
-                        child: ListView.builder(
-                          padding: EdgeInsets.zero,
-                          itemCount: options.length,
-                          itemBuilder: (context, index) {
-                            final city = options.elementAt(index);
-                            return ListTile(
-                              title: Text(city),
-                              onTap: () => onSelected(city),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-
-              DropdownButtonFormField<AcademicPosition>(
-                initialValue: _position,
-                decoration: const InputDecoration(labelText: 'Position', border: OutlineInputBorder()),
-                items: AcademicPosition.values
-                    .map((p) => DropdownMenuItem(value: p, child: Text(p.label)))
-                    .toList(),
-                onChanged: (v) => setState(() => _position = v),
-                validator: (v) => v == null ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _ageController,
-                decoration: const InputDecoration(labelText: 'Age', border: OutlineInputBorder()),
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  final n = int.tryParse(v?.trim() ?? '');
-                  if (n == null || n < 16 || n > 100) return 'Enter a valid age';
                   return null;
                 },
               ),
+
               const SizedBox(height: 16),
+
+              // ===============================================
+              // SURNAME
+              // ===============================================
+
+              TextFormField(
+                controller:
+                    _surnameController,
+
+                decoration:
+                    const InputDecoration(
+                  labelText: 'Surname',
+                  border:
+                      OutlineInputBorder(),
+                ),
+
+                validator: (value) {
+                  if (value == null ||
+                      value.trim().isEmpty) {
+                    return 'Required';
+                  }
+
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              // ===============================================
+              // UNIVERSITY
+              // ===============================================
+
+              TextFormField(
+                controller:
+                    _universityController,
+
+                decoration:
+                    const InputDecoration(
+                  labelText: 'University',
+                  border:
+                      OutlineInputBorder(),
+                ),
+
+                validator: (value) {
+                  if (value == null ||
+                      value.trim().isEmpty) {
+                    return 'Required';
+                  }
+
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 20),
+
+              // ===============================================
+              // GLOBAL LOCATION
+              // SAME COMPONENT AS CREATE REQUEST
+              // ===============================================
+
+              const Text(
+                'Location',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight:
+                      FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              const Text(
+                'Choose your location from the standardized global list so buddy matching stays consistent.',
+                style: TextStyle(
+                  color: Colors.grey,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              GlobalLocationPicker(
+                initialCountry:
+                    _selectedCountry,
+
+                initialCity:
+                    _selectedCity,
+
+                onChanged: (location) {
+                  setState(() {
+                    if (location == null) {
+                      _selectedCountry =
+                          null;
+
+                      _selectedCity =
+                          null;
+                    } else {
+                      _selectedCountry =
+                          location.country;
+
+                      _selectedCity =
+                          location.city;
+                    }
+                  });
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              // ===============================================
+              // POSITION
+              // ===============================================
+
+              DropdownButtonFormField<
+                  AcademicPosition>(
+                initialValue:
+                    _position,
+
+                decoration:
+                    const InputDecoration(
+                  labelText: 'Position',
+                  border:
+                      OutlineInputBorder(),
+                ),
+
+                items:
+                    AcademicPosition.values
+                        .map(
+                  (position) {
+                    return DropdownMenuItem(
+                      value: position,
+                      child: Text(
+                        position.label,
+                      ),
+                    );
+                  },
+                ).toList(),
+
+                onChanged: (value) {
+                  setState(() {
+                    _position = value;
+                  });
+                },
+
+                validator: (value) {
+                  if (value == null) {
+                    return 'Required';
+                  }
+
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              // ===============================================
+              // AGE
+              // ===============================================
+
+              TextFormField(
+                controller:
+                    _ageController,
+
+                decoration:
+                    const InputDecoration(
+                  labelText: 'Age',
+                  border:
+                      OutlineInputBorder(),
+                ),
+
+                keyboardType:
+                    TextInputType.number,
+
+                validator: (value) {
+                  final age =
+                      int.tryParse(
+                    value?.trim() ?? '',
+                  );
+
+                  if (age == null ||
+                      age < 16 ||
+                      age > 100) {
+                    return 'Enter a valid age';
+                  }
+
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              // ===============================================
+              // SEX
+              // ===============================================
 
               DropdownButtonFormField<Sex>(
-                initialValue: _sex,
-                decoration: const InputDecoration(labelText: 'Sex', border: OutlineInputBorder()),
-                items: Sex.values.map((s) => DropdownMenuItem(value: s, child: Text(s.label))).toList(),
-                onChanged: (v) => setState(() => _sex = v),
-                validator: (v) => v == null ? 'Required' : null,
+                initialValue:
+                    _sex,
+
+                decoration:
+                    const InputDecoration(
+                  labelText: 'Sex',
+                  border:
+                      OutlineInputBorder(),
+                ),
+
+                items:
+                    Sex.values.map(
+                  (sex) {
+                    return DropdownMenuItem(
+                      value: sex,
+                      child:
+                          Text(sex.label),
+                    );
+                  },
+                ).toList(),
+
+                onChanged: (value) {
+                  setState(() {
+                    _sex = value;
+                  });
+                },
+
+                validator: (value) {
+                  if (value == null) {
+                    return 'Required';
+                  }
+
+                  return null;
+                },
               ),
+
               const SizedBox(height: 16),
 
+              // ===============================================
+              // LANGUAGES
+              // ===============================================
+
               Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Languages you speak', style: Theme.of(context).textTheme.titleSmall),
+                alignment:
+                    Alignment.centerLeft,
+
+                child: Text(
+                  'Languages you speak',
+                  style:
+                      Theme.of(context)
+                          .textTheme
+                          .titleSmall,
+                ),
               ),
+
               const SizedBox(height: 8),
+
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: kAvailableLanguages.map((lang) {
-                  final selected = _selectedLanguages.contains(lang);
-                  return FilterChip(
-                    label: Text(lang),
-                    selected: selected,
-                    onSelected: (v) {
-                      setState(() {
-                        if (v) {
-                          _selectedLanguages.add(lang);
-                        } else {
-                          _selectedLanguages.remove(lang);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
+
+                children:
+                    kAvailableLanguages
+                        .map(
+                  (language) {
+                    final selected =
+                        _selectedLanguages
+                            .contains(
+                      language,
+                    );
+
+                    return FilterChip(
+                      label:
+                          Text(language),
+
+                      selected:
+                          selected,
+
+                      onSelected:
+                          (value) {
+                        setState(() {
+                          if (value) {
+                            _selectedLanguages
+                                .add(
+                              language,
+                            );
+                          } else {
+                            _selectedLanguages
+                                .remove(
+                              language,
+                            );
+                          }
+                        });
+                      },
+                    );
+                  },
+                ).toList(),
               ),
 
-              if (profileController.errorMessage != null) ...[
-                const SizedBox(height: 16),
-                Text(profileController.errorMessage!, style: const TextStyle(color: Colors.red)),
+              // ===============================================
+              // ERROR
+              // ===============================================
+
+              if (profileController
+                      .errorMessage !=
+                  null) ...[
+                const SizedBox(
+                  height: 16,
+                ),
+
+                Text(
+                  profileController
+                      .errorMessage!,
+
+                  style:
+                      const TextStyle(
+                    color: Colors.red,
+                  ),
+                ),
               ],
 
               const SizedBox(height: 32),
+
+              // ===============================================
+              // SAVE
+              // ===============================================
+
               PrimaryButton(
-                label: _isEditing ? 'Save changes' : 'Save and continue',
-                isLoading: profileController.isSaving,
-                onPressed: _handleSave,
+                label:
+                    _isEditing
+                        ? 'Save changes'
+                        : 'Save and continue',
+
+                isLoading:
+                    profileController
+                        .isSaving,
+
+                onPressed:
+                    _handleSave,
               ),
             ],
           ),

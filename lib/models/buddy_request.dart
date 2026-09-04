@@ -35,12 +35,16 @@ extension HelpTypeLabel on HelpType {
 }
 
 /// Current state of a request.
-enum RequestStatus { pending, accepted, completed, cancelled }
+enum RequestStatus {
+  pending,
+  accepted,
+  completed,
+  cancelled,
+}
 
 /// A real help request created by an exchange student.
 class BuddyRequest {
   /// Firestore document ID.
-  /// It can be null before the request is uploaded.
   final String? id;
 
   /// User who created the request.
@@ -63,7 +67,6 @@ class BuddyRequest {
   /// When the help is needed.
   final DateTime dateTime;
 
-  /// Optional:
   /// null = visible to all buddies.
   /// not null = request is aimed at one specific buddy.
   final String? targetBuddyId;
@@ -71,19 +74,33 @@ class BuddyRequest {
   /// The buddy who finally accepts the request.
   final String? acceptedBuddyId;
 
-  /// pending / accepted / completed
+  /// pending / accepted / completed / cancelled
   final RequestStatus status;
 
   /// When this request was created.
   final DateTime createdAt;
 
-  /// Feedback left by the requester after completion.
+  // =========================================================
+  // REQUESTER -> BUDDY FEEDBACK
+  // =========================================================
+
+  /// Feedback left by the requester for the buddy.
   final int? requesterRating;
   final String? requesterFeedback;
 
-  /// Feedback left by the buddy after completion.
+  /// When requester feedback was submitted.
+  final DateTime? requesterFeedbackAt;
+
+  // =========================================================
+  // BUDDY -> REQUESTER FEEDBACK
+  // =========================================================
+
+  /// Feedback left by the buddy for the requester.
   final int? buddyRating;
   final String? buddyFeedback;
+
+  /// When buddy feedback was submitted.
+  final DateTime? buddyFeedbackAt;
 
   const BuddyRequest({
     this.id,
@@ -101,9 +118,16 @@ class BuddyRequest {
     required this.createdAt,
     this.requesterRating,
     this.requesterFeedback,
+    this.requesterFeedbackAt,
     this.buddyRating,
     this.buddyFeedback,
+    this.buddyFeedbackAt,
   });
+
+  // =========================================================
+  // TO FIRESTORE
+  // =========================================================
+
   Map<String, dynamic> toMap() {
     return {
       'requesterId': requesterId,
@@ -118,32 +142,96 @@ class BuddyRequest {
       'acceptedBuddyId': acceptedBuddyId,
       'status': status.name,
       'createdAt': createdAt,
+
+      // Requester -> Buddy
       'requesterRating': requesterRating,
       'requesterFeedback': requesterFeedback,
+      'requesterFeedbackAt': requesterFeedbackAt,
+
+      // Buddy -> Requester
       'buddyRating': buddyRating,
       'buddyFeedback': buddyFeedback,
+      'buddyFeedbackAt': buddyFeedbackAt,
     };
   }
 
-  factory BuddyRequest.fromMap(String id, Map<String, dynamic> map) {
+  // =========================================================
+  // FROM FIRESTORE
+  // =========================================================
+
+  factory BuddyRequest.fromMap(
+    String id,
+    Map<String, dynamic> map,
+  ) {
     return BuddyRequest(
       id: id,
-      requesterId: map['requesterId'] as String,
-      requesterName: map['requesterName'] as String,
-      helpType: HelpType.values.byName(map['helpType'] as String),
-      customHelp: map['customHelp'] as String?,
-      note: map['note'] as String?,
-      country: map['country'] as String,
-      city: map['city'] as String,
-      dateTime: (map['dateTime'] as Timestamp).toDate(),
-      targetBuddyId: map['targetBuddyId'] as String?,
-      acceptedBuddyId: map['acceptedBuddyId'] as String?,
-      status: RequestStatus.values.byName(map['status'] as String),
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
-      requesterRating: map['requesterRating'] as int?,
-      requesterFeedback: map['requesterFeedback'] as String?,
-      buddyRating: map['buddyRating'] as int?,
-      buddyFeedback: map['buddyFeedback'] as String?,
+
+      requesterId:
+          map['requesterId'] as String,
+
+      requesterName:
+          map['requesterName'] as String,
+
+      helpType:
+          HelpType.values.byName(
+        map['helpType'] as String,
+      ),
+
+      customHelp:
+          map['customHelp'] as String?,
+
+      note:
+          map['note'] as String?,
+
+      country:
+          map['country'] as String,
+
+      city:
+          map['city'] as String,
+
+      dateTime:
+          (map['dateTime'] as Timestamp)
+              .toDate(),
+
+      targetBuddyId:
+          map['targetBuddyId'] as String?,
+
+      acceptedBuddyId:
+          map['acceptedBuddyId'] as String?,
+
+      status:
+          RequestStatus.values.byName(
+        map['status'] as String,
+      ),
+
+      createdAt:
+          (map['createdAt'] as Timestamp)
+              .toDate(),
+
+      // Requester -> Buddy
+      requesterRating:
+          map['requesterRating'] as int?,
+
+      requesterFeedback:
+          map['requesterFeedback']
+              as String?,
+
+      requesterFeedbackAt:
+          (map['requesterFeedbackAt']
+                  as Timestamp?)
+              ?.toDate(),
+
+      // Buddy -> Requester
+      buddyRating:
+          map['buddyRating'] as int?,
+
+      buddyFeedback:
+          map['buddyFeedback'] as String?,
+
+      buddyFeedbackAt:
+          (map['buddyFeedbackAt']
+                  as Timestamp?)
+              ?.toDate(),
     );
   }
 }
