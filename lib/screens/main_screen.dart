@@ -9,17 +9,53 @@ import '../widgets/buddy_status_card.dart';
 import '../widgets/main_action_tile.dart';
 import '../widgets/profile_menu_button.dart';
 import '../widgets/main_bottom_bar.dart';
+import 'chat_screen.dart';
 import 'my_requests_screen.dart';
+import 'my_tasks_screen.dart';
+import 'offers_screen.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
+
+  void _openOffers(BuildContext context) {
+    Navigator.of(context).pop();
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const OffersScreen()),
+    );
+  }
+
+  void _openMyTasks(BuildContext context) {
+    Navigator.of(context).pop();
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MyTasksScreen()),
+    );
+  }
+
+  void _openMyRequests(BuildContext context) {
+    Navigator.of(context).pop();
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MyRequestsScreen()),
+    );
+  }
+
+  void _openMyChats(BuildContext context) {
+    Navigator.of(context).pop();
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ChatScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthController>().currentUser;
 
     return Scaffold(
-      drawer: const AppDrawer(),
+      drawer: AppDrawer(
+        onOffers: () => _openOffers(context),
+        onMyTasks: () => _openMyTasks(context),
+        onMyRequests: () => _openMyRequests(context),
+        onMyChats: () => _openMyChats(context),
+      ),
 
       appBar: AppBar(
         title: const Text('UniBuddy'),

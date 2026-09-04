@@ -5,12 +5,14 @@ import '../controllers/auth_controller.dart';
 import 'main_action_button.dart';
 
 import '../screens/chat_screen.dart';
+import '../screens/main_screen.dart';
 import '../screens/my_requests_screen.dart';
+import '../screens/my_tasks_screen.dart';
 import '../screens/offers_screen.dart';
 
 
 /// Shared quick-access bar:
-/// Chat / Browse Requests / My Requests.
+/// Home / Chat / Browse Requests / My Requests / My Tasks.
 class MainBottomBar extends StatelessWidget {
   const MainBottomBar({super.key});
 
@@ -23,20 +25,35 @@ class MainBottomBar extends StatelessWidget {
           children: [
 
             // ============================
+            // Home
+            // ============================
+            MainActionButton(
+              icon: Icons.home_outlined,
+              label: 'Home',
+              showLabel: false,
+              onTap: () {
+                // Return to the existing MainScreen instead of pushing
+                // a new one - MainScreen is always the first route.
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              },
+            ),
+
+            const SizedBox(width: 12),
+
+            // ============================
             // Chat
             // ============================
-            Expanded(
-              child: MainActionButton(
-                icon: Icons.chat_bubble_outline,
-                label: 'Chat',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const ChatScreen(),
-                    ),
-                  );
-                },
-              ),
+            MainActionButton(
+              icon: Icons.chat_bubble_outline,
+              label: 'Chat',
+              showLabel: false,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ChatScreen(),
+                  ),
+                );
+              },
             ),
 
             const SizedBox(width: 12),
@@ -46,61 +63,60 @@ class MainBottomBar extends StatelessWidget {
             // Browse Requests
             // Only available for Buddies
             // ============================
-            Expanded(
-              child: MainActionButton(
-                icon: Icons.search,
-                label: 'Browse Requests',
-                onTap: () {
+            MainActionButton(
+              icon: Icons.search,
+              label: 'Browse Requests',
+              showLabel: false,
+              onTap: () {
 
-                  final user =
-                      context.read<AuthController>().currentUser;
-
-
-                  if (user == null) {
-                    return;
-                  }
+                final user =
+                    context.read<AuthController>().currentUser;
 
 
-                  // User must enable "Be a Buddy"
-                  if (!user.isAcceptingBuddyRequests) {
+                if (user == null) {
+                  return;
+                }
 
-                    showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: const Text(
-                          'Become a Buddy first',
-                        ),
 
-                        content: const Text(
-                          'Enable "Be a Buddy" mode before accepting requests.',
-                        ),
+                // User must enable "Be a Buddy"
+                if (!user.isAcceptingBuddyRequests) {
 
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-
-                            child: const Text(
-                              'OK',
-                            ),
-                          ),
-                        ],
+                  showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text(
+                        'Become a Buddy first',
                       ),
-                    );
 
-                    return;
-                  }
+                      content: const Text(
+                        'Enable "Be a Buddy" mode before accepting requests.',
+                      ),
 
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
 
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const OffersScreen(),
+                          child: const Text(
+                            'OK',
+                          ),
+                        ),
+                      ],
                     ),
                   );
 
-                },
-              ),
+                  return;
+                }
+
+
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const OffersScreen(),
+                  ),
+                );
+
+              },
             ),
 
 
@@ -110,18 +126,35 @@ class MainBottomBar extends StatelessWidget {
             // ============================
             // My Requests
             // ============================
-            Expanded(
-              child: MainActionButton(
-                icon: Icons.list_alt_outlined,
-                label: 'My Requests',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const MyRequestsScreen(),
-                    ),
-                  );
-                },
-              ),
+            MainActionButton(
+              icon: Icons.list_alt_outlined,
+              label: 'My Requests',
+              showLabel: false,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const MyRequestsScreen(),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(width: 12),
+
+            // ============================
+            // My Tasks
+            // ============================
+            MainActionButton(
+              icon: Icons.task_alt_outlined,
+              label: 'My Tasks',
+              showLabel: false,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const MyTasksScreen(),
+                  ),
+                );
+              },
             ),
 
           ],

@@ -8,6 +8,8 @@ import '../widgets/app_drawer.dart';
 import 'chat_screen.dart';
 import 'create_request_screen.dart';
 import '../widgets/main_bottom_bar.dart';
+import 'my_tasks_screen.dart';
+import 'offers_screen.dart';
 
 class MyRequestsScreen extends StatefulWidget {
   const MyRequestsScreen({super.key});
@@ -62,14 +64,22 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
     ).push(MaterialPageRoute(builder: (_) => const ChatScreen()));
   }
 
-  /// Return to the initial Offer / Request mode selection screen.
-  void _switchMode() {
-    // First pop: close the drawer.
+    /// Open Offers.
+  void _openOffers() {
     Navigator.of(context).pop();
 
-    // Second pop: exit My Requests,
-    // and return to the previous mode selection screen.
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const OffersScreen()));
+  }
+
+  /// Open My Tasks.
+  void _openMyTasks() {
     Navigator.of(context).pop();
+
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const MyTasksScreen()));
   }
 
   @override
@@ -80,8 +90,10 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
       // ==============================
       // Requester mode left sidebar
       // ==============================
-      drawer: AppDrawer(
-        mode: AppDrawerMode.requester,
+            drawer: AppDrawer(
+        onOffers: _openOffers,
+
+        onMyTasks: _openMyTasks,
 
         onMyRequests: () {
           // We are already on My Requests,
@@ -90,8 +102,6 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
         },
 
         onMyChats: _openMyChats,
-
-        onSwitchMode: _switchMode,
       ),
 
       // ==============================

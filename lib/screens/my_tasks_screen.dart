@@ -8,6 +8,7 @@ import '../widgets/app_drawer.dart';
 import 'chat_screen.dart';
 import 'offers_screen.dart';
 import '../widgets/main_bottom_bar.dart';
+import 'my_requests_screen.dart';
 
 class MyTasksScreen extends StatefulWidget {
   const MyTasksScreen({super.key});
@@ -54,12 +55,12 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
     ).push(MaterialPageRoute(builder: (_) => const ChatScreen()));
   }
 
-  void _switchMode() {
-    // Close the drawer.
+    void _openMyRequests() {
     Navigator.of(context).pop();
 
-    // Return to the Offer / Request mode selection screen.
-    Navigator.of(context).pop();
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const MyRequestsScreen()));
   }
 
   @override
@@ -67,9 +68,7 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
     final controller = context.watch<RequestController>();
 
     return Scaffold(
-      drawer: AppDrawer(
-        mode: AppDrawerMode.buddy,
-
+            drawer: AppDrawer(
         onOffers: _openOffers,
 
         onMyTasks: () {
@@ -77,9 +76,9 @@ class _MyTasksScreenState extends State<MyTasksScreen> {
           Navigator.of(context).pop();
         },
 
-        onMyChats: _openMyChats,
+        onMyRequests: _openMyRequests,
 
-        onSwitchMode: _switchMode,
+        onMyChats: _openMyChats,
       ),
 
       appBar: AppBar(

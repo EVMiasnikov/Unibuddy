@@ -9,27 +9,23 @@ import '../widgets/app_drawer.dart';
 import 'chat_screen.dart';
 import 'my_tasks_screen.dart';
 import '../widgets/main_bottom_bar.dart';
+import 'my_requests_screen.dart';
 
 class OffersScreen extends StatefulWidget {
-  const OffersScreen({
-    super.key,
-  });
+  const OffersScreen({super.key});
 
   @override
-  State<OffersScreen> createState() =>
-      _OffersScreenState();
+  State<OffersScreen> createState() => _OffersScreenState();
 }
 
-class _OffersScreenState
-    extends State<OffersScreen> {
+class _OffersScreenState extends State<OffersScreen> {
   HelpType? _selectedHelpType;
 
   @override
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadOffers();
     });
   }
@@ -39,72 +35,52 @@ class _OffersScreenState
   // =========================================================
 
   Future<void> _loadOffers() async {
-    final user =
-        context
-            .read<AuthController>()
-            .currentUser;
+    final user = context.read<AuthController>().currentUser;
 
     if (user == null) {
       return;
     }
 
-    await context
-        .read<RequestController>()
-        .loadOffers(
-          user.id,
-          user.city,
-        );
+    await context.read<RequestController>().loadOffers(user.id, user.city);
   }
 
   // =========================================================
   // ACCEPT REQUEST
   // =========================================================
 
-  Future<void> _acceptRequest(
-  BuddyRequest request,
-) async {
-  final user =
-      context
-          .read<AuthController>()
-          .currentUser;
+  Future<void> _acceptRequest(BuddyRequest request) async {
+    final user = context.read<AuthController>().currentUser;
 
-  if (user == null ||
-      request.id == null) {
-    return;
-  }
+    if (user == null || request.id == null) {
+      return;
+    }
 
+    // =======================================================
+    // CHECK BUDDY MODE
+    // =======================================================
 
-  // =======================================================
-  // CHECK BUDDY MODE
-  // =======================================================
-
-  if (!user.isAcceptingBuddyRequests) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Please enable "Be a Buddy" before accepting requests.',
+    if (!user.isAcceptingBuddyRequests) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please enable "Be a Buddy" before accepting requests.',
+          ),
         ),
-      ),
-    );
+      );
 
-    return;
-  }
+      return;
+    }
 
     // =======================================================
     // CONFIRM DIALOG
     // =======================================================
 
-    final confirmed =
-        await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
 
       builder: (dialogContext) {
         return AlertDialog(
-          title:
-              const Text(
-            'Accept Request',
-          ),
+          title: const Text('Accept Request'),
 
           content: Text(
             'Do you want to accept this '
@@ -114,28 +90,18 @@ class _OffersScreenState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(false);
+                Navigator.of(dialogContext).pop(false);
               },
 
-              child:
-                  const Text(
-                'Cancel',
-              ),
+              child: const Text('Cancel'),
             ),
 
             FilledButton(
               onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(true);
+                Navigator.of(dialogContext).pop(true);
               },
 
-              child:
-                  const Text(
-                'Accept',
-              ),
+              child: const Text('Accept'),
             ),
           ],
         );
@@ -155,44 +121,28 @@ class _OffersScreenState
     // ACCEPT + CREATE CHAT
     // =======================================================
 
-    final success =
-        await context
-            .read<RequestController>()
-            .acceptRequest(
-              request: request,
-              buddyId: user.id,
-              buddyName:
-                  user.fullName,
-            );
+    final success = await context.read<RequestController>().acceptRequest(
+      request: request,
+      buddyId: user.id,
+      buddyName: user.fullName,
+    );
 
     if (!mounted) {
       return;
     }
 
     if (success) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Request accepted successfully.',
-          ),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request accepted successfully.')),
       );
     } else {
       final error =
-          context
-                  .read<
-                      RequestController>()
-                  .errorMessage ??
-              'Failed to accept request.';
+          context.read<RequestController>().errorMessage ??
+          'Failed to accept request.';
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        SnackBar(
-          content:
-              Text(error),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
     }
   }
 
@@ -204,12 +154,9 @@ class _OffersScreenState
     // Close the drawer.
     Navigator.of(context).pop();
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) =>
-            const ChatScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ChatScreen()));
   }
 
   void _openMyTasks() {
@@ -217,50 +164,38 @@ class _OffersScreenState
     Navigator.of(context).pop();
 
     // Offers → My Tasks
-    Navigator.of(context)
-        .pushReplacement(
-      MaterialPageRoute(
-        builder: (_) =>
-            const MyTasksScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const MyTasksScreen()));
   }
 
-  void _switchMode() {
+  void _openMyRequests() {
     // Close the drawer.
     Navigator.of(context).pop();
 
-    // Return to the mode selection screen.
-    Navigator.of(context).pop();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const MyRequestsScreen()),
+    );
   }
 
   // =========================================================
   // UI
   // =========================================================
 
-  List<BuddyRequest> _visibleOffers(
-    List<BuddyRequest> offers,
-  ) {
-    final visible =
-        offers.where((offer) {
-      final selected =
-          _selectedHelpType;
+  List<BuddyRequest> _visibleOffers(List<BuddyRequest> offers) {
+    final visible = offers.where((offer) {
+      final selected = _selectedHelpType;
 
-      return selected == null ||
-          offer.helpType == selected;
+      return selected == null || offer.helpType == selected;
     }).toList();
 
-    visible.sort(
-      (a, b) =>
-          a.dateTime.compareTo(b.dateTime),
-    );
+    visible.sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
     return visible;
   }
 
   String _selectedTypeLabel() {
-    final selected =
-        _selectedHelpType;
+    final selected = _selectedHelpType;
 
     if (selected == null) {
       return 'All request types';
@@ -271,46 +206,29 @@ class _OffersScreenState
 
   Widget _buildTypeFilter() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        0,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: DropdownButtonFormField<HelpType?>(
-        initialValue:
-            _selectedHelpType,
+        initialValue: _selectedHelpType,
 
-        isExpanded:
-            true,
+        isExpanded: true,
 
-        decoration:
-            const InputDecoration(
-          labelText:
-              'Request type',
-          prefixIcon:
-              Icon(Icons.filter_list),
-          border:
-              OutlineInputBorder(),
+        decoration: const InputDecoration(
+          labelText: 'Request type',
+          prefixIcon: Icon(Icons.filter_list),
+          border: OutlineInputBorder(),
         ),
 
         items: [
           const DropdownMenuItem<HelpType?>(
-            value:
-                null,
-            child:
-                Text('All request types'),
+            value: null,
+            child: Text('All request types'),
           ),
-          ...HelpType.values.map(
-            (type) {
-              return DropdownMenuItem<HelpType?>(
-                value:
-                    type,
-                child:
-                    Text(type.label),
-              );
-            },
-          ),
+          ...HelpType.values.map((type) {
+            return DropdownMenuItem<HelpType?>(
+              value: type,
+              child: Text(type.label),
+            );
+          }),
         ],
 
         onChanged: (value) {
@@ -323,74 +241,48 @@ class _OffersScreenState
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final controller =
-        context.watch<
-            RequestController>();
+  Widget build(BuildContext context) {
+    final controller = context.watch<RequestController>();
 
     return Scaffold(
       // =====================================================
       // DRAWER
       // =====================================================
-
       drawer: AppDrawer(
-        mode:
-            AppDrawerMode.buddy,
-
         onOffers: () {
-          Navigator.of(context)
-              .pop();
+          Navigator.of(context).pop();
         },
 
-        onMyTasks:
-            _openMyTasks,
+        onMyTasks: _openMyTasks,
 
-        onMyChats:
-            _openMyChats,
+        onMyRequests: _openMyRequests,
 
-        onSwitchMode:
-            _switchMode,
+        onMyChats: _openMyChats,
       ),
 
       // =====================================================
       // APP BAR
       // =====================================================
-
       appBar: AppBar(
         leading: Builder(
           builder: (context) {
             return IconButton(
-              icon:
-                  const Icon(
-                Icons.menu,
-              ),
+              icon: const Icon(Icons.menu),
 
               onPressed: () {
-                Scaffold.of(context)
-                    .openDrawer();
+                Scaffold.of(context).openDrawer();
               },
             );
           },
         ),
 
-        title:
-            const Text(
-          'Offers',
-        ),
+        title: const Text('Offers'),
       ),
 
       // =====================================================
       // BODY
       // =====================================================
-
-      body: SafeArea(
-        child:
-            _buildBody(
-          controller,
-        ),
-      ),
+      body: SafeArea(child: _buildBody(controller)),
       // ==============================
       // Quick access - Chat / Browse / My Requests
       // Docked to the bottom of the screen.
@@ -403,64 +295,34 @@ class _OffersScreenState
   // BUILD BODY
   // =========================================================
 
-  Widget _buildBody(
-    RequestController controller,
-  ) {
+  Widget _buildBody(RequestController controller) {
     // First load
-    if (controller.isLoading &&
-        controller.offers.isEmpty) {
-      return const Center(
-        child:
-            CircularProgressIndicator(),
-      );
+    if (controller.isLoading && controller.offers.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
     }
 
     // Failed to load
-    if (controller.errorMessage !=
-            null &&
-        controller.offers.isEmpty) {
+    if (controller.errorMessage != null && controller.offers.isEmpty) {
       return Center(
         child: Padding(
-          padding:
-              const EdgeInsets.all(
-            24,
-          ),
+          padding: const EdgeInsets.all(24),
 
           child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment
-                    .center,
+            mainAxisAlignment: MainAxisAlignment.center,
 
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 48,
-              ),
+              const Icon(Icons.error_outline, size: 48),
 
-              const SizedBox(
-                height: 12,
-              ),
+              const SizedBox(height: 12),
 
-              Text(
-                controller
-                    .errorMessage!,
+              Text(controller.errorMessage!, textAlign: TextAlign.center),
 
-                textAlign:
-                    TextAlign.center,
-              ),
-
-              const SizedBox(
-                height: 16,
-              ),
+              const SizedBox(height: 16),
 
               OutlinedButton(
-                onPressed:
-                    _loadOffers,
+                onPressed: _loadOffers,
 
-                child:
-                    const Text(
-                  'Try again',
-                ),
+                child: const Text('Try again'),
               ),
             ],
           ),
@@ -472,60 +334,37 @@ class _OffersScreenState
     if (controller.offers.isEmpty) {
       return const Center(
         child: Padding(
-          padding:
-              EdgeInsets.all(
-            32,
-          ),
+          padding: EdgeInsets.all(32),
 
           child: Column(
-            mainAxisAlignment:
-                MainAxisAlignment
-                    .center,
+            mainAxisAlignment: MainAxisAlignment.center,
 
             children: [
               Icon(
-                Icons
-                    .volunteer_activism_outlined,
+                Icons.volunteer_activism_outlined,
 
                 size: 56,
 
-                color:
-                    Colors.grey,
+                color: Colors.grey,
               ),
 
-              SizedBox(
-                height: 16,
-              ),
+              SizedBox(height: 16),
 
               Text(
                 'No requests available.',
 
-                style:
-                    TextStyle(
-                  fontSize: 18,
-
-                  fontWeight:
-                      FontWeight
-                          .bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
 
-              SizedBox(
-                height: 8,
-              ),
+              SizedBox(height: 8),
 
               Text(
                 'New requests from students '
                 'will appear here.',
 
-                textAlign:
-                    TextAlign.center,
+                textAlign: TextAlign.center,
 
-                style:
-                    TextStyle(
-                  color:
-                      Colors.grey,
-                ),
+                style: TextStyle(color: Colors.grey),
               ),
             ],
           ),
@@ -537,8 +376,7 @@ class _OffersScreenState
     // OFFER LIST
     // =======================================================
 
-    final offers =
-        _visibleOffers(controller.offers);
+    final offers = _visibleOffers(controller.offers);
 
     return Column(
       children: [
@@ -549,55 +387,33 @@ class _OffersScreenState
             child: Center(
               child: Text(
                 'No ${_selectedTypeLabel().toLowerCase()} requests available.',
-                textAlign:
-                    TextAlign.center,
-                style:
-                    const TextStyle(
-                  color:
-                      Colors.grey,
-                ),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.grey),
               ),
             ),
           )
         else
           Expanded(
             child: RefreshIndicator(
-              onRefresh:
-                  _loadOffers,
+              onRefresh: _loadOffers,
 
-              child:
-                  ListView.separated(
-                padding:
-                    const EdgeInsets.all(
-                  16,
-                ),
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
 
-                itemCount:
-                    offers.length,
+                itemCount: offers.length,
 
-                separatorBuilder:
-                    (_, _) =>
-                        const SizedBox(
-                  height: 12,
-                ),
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
 
-                itemBuilder:
-                    (context, index) {
-                  final request =
-                      offers[index];
+                itemBuilder: (context, index) {
+                  final request = offers[index];
 
                   return _OfferCard(
-                    request:
-                        request,
+                    request: request,
 
-                    isLoading:
-                        controller
-                            .isLoading,
+                    isLoading: controller.isLoading,
 
                     onAccept: () {
-                      _acceptRequest(
-                        request,
-                      );
+                      _acceptRequest(request);
                     },
                   );
                 },
@@ -613,8 +429,7 @@ class _OffersScreenState
 // OFFER CARD
 // ===========================================================
 
-class _OfferCard
-    extends StatelessWidget {
+class _OfferCard extends StatelessWidget {
   final BuddyRequest request;
 
   final bool isLoading;
@@ -628,53 +443,31 @@ class _OfferCard
   });
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final date =
-        request.dateTime;
+  Widget build(BuildContext context) {
+    final date = request.dateTime;
 
     final dateText =
         '${date.day}/'
         '${date.month}/'
         '${date.year}';
 
-    final timeText =
-        TimeOfDay
-            .fromDateTime(
-              date,
-            )
-            .format(context);
+    final timeText = TimeOfDay.fromDateTime(date).format(context);
 
     return Card(
       child: Padding(
-        padding:
-            const EdgeInsets.all(
-          16,
-        ),
+        padding: const EdgeInsets.all(16),
 
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
+          crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
             // =================================================
             // HELP TYPE
             // =================================================
-
             Text(
-              request
-                  .helpType.label,
+              request.helpType.label,
 
-              style:
-                  const TextStyle(
-                fontSize: 17,
-
-                fontWeight:
-                    FontWeight
-                        .bold,
-              ),
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
 
             // =================================================
@@ -686,96 +479,52 @@ class _OfferCard
             //
             // Because RequestService already handles filtering,
             // other buddies will never see it.
-
-            if (request.targetBuddyId !=
-                null) ...[
-              const SizedBox(
-                height: 10,
-              ),
+            if (request.targetBuddyId != null) ...[
+              const SizedBox(height: 10),
 
               const Chip(
-                avatar: Icon(
-                  Icons
-                      .star_outline,
-                  size: 18,
-                ),
+                avatar: Icon(Icons.star_outline, size: 18),
 
-                label: Text(
-                  'Requested specifically for you',
-                ),
+                label: Text('Requested specifically for you'),
               ),
             ],
 
             // =================================================
             // OTHER HELP TYPE
             // =================================================
+            if (request.helpType == HelpType.other &&
+                request.customHelp != null &&
+                request.customHelp!.isNotEmpty) ...[
+              const SizedBox(height: 6),
 
-            if (request.helpType ==
-                    HelpType.other &&
-                request.customHelp !=
-                    null &&
-                request.customHelp!
-                    .isNotEmpty) ...[
-              const SizedBox(
-                height: 6,
-              ),
-
-              Text(
-                request
-                    .customHelp!,
-              ),
+              Text(request.customHelp!),
             ],
 
-            const SizedBox(
-              height: 12,
-            ),
+            const SizedBox(height: 12),
 
             // =================================================
             // REQUESTER
             // =================================================
-
             Row(
               children: [
-                const Icon(
-                  Icons
-                      .person_outline,
+                const Icon(Icons.person_outline, size: 18),
 
-                  size: 18,
-                ),
+                const SizedBox(width: 6),
 
-                const SizedBox(
-                  width: 6,
-                ),
-
-                Expanded(
-                  child: Text(
-                    request
-                        .requesterName,
-                  ),
-                ),
+                Expanded(child: Text(request.requesterName)),
               ],
             ),
 
-            const SizedBox(
-              height: 8,
-            ),
+            const SizedBox(height: 8),
 
             // =================================================
             // LOCATION
             // =================================================
-
             Row(
               children: [
-                const Icon(
-                  Icons
-                      .location_on_outlined,
+                const Icon(Icons.location_on_outlined, size: 18),
 
-                  size: 18,
-                ),
-
-                const SizedBox(
-                  width: 6,
-                ),
+                const SizedBox(width: 6),
 
                 Expanded(
                   child: Text(
@@ -786,26 +535,16 @@ class _OfferCard
               ],
             ),
 
-            const SizedBox(
-              height: 8,
-            ),
+            const SizedBox(height: 8),
 
             // =================================================
             // DATE + TIME
             // =================================================
-
             Row(
               children: [
-                const Icon(
-                  Icons
-                      .schedule_outlined,
+                const Icon(Icons.schedule_outlined, size: 18),
 
-                  size: 18,
-                ),
-
-                const SizedBox(
-                  width: 6,
-                ),
+                const SizedBox(width: 6),
 
                 Text(
                   '$dateText · '
@@ -817,56 +556,26 @@ class _OfferCard
             // =================================================
             // NOTE
             // =================================================
+            if (request.note != null && request.note!.isNotEmpty) ...[
+              const SizedBox(height: 12),
 
-            if (request.note !=
-                    null &&
-                request.note!
-                    .isNotEmpty) ...[
-              const SizedBox(
-                height: 12,
-              ),
-
-              Text(
-                request.note!,
-
-                style:
-                    const TextStyle(
-                  color:
-                      Colors.grey,
-                ),
-              ),
+              Text(request.note!, style: const TextStyle(color: Colors.grey)),
             ],
 
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 16),
 
             // =================================================
             // ACCEPT BUTTON
             // =================================================
-
             Align(
-              alignment:
-                  Alignment
-                      .centerRight,
+              alignment: Alignment.centerRight,
 
-              child:
-                  FilledButton.icon(
-                onPressed:
-                    isLoading
-                        ? null
-                        : onAccept,
+              child: FilledButton.icon(
+                onPressed: isLoading ? null : onAccept,
 
-                icon:
-                    const Icon(
-                  Icons
-                      .check_circle_outline,
-                ),
+                icon: const Icon(Icons.check_circle_outline),
 
-                label:
-                    const Text(
-                  'Accept Request',
-                ),
+                label: const Text('Accept Request'),
               ),
             ),
           ],
