@@ -30,7 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  http: ^1.2.2
   provider: ^6.1.2 # State management package
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1
