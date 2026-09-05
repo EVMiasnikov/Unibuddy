@@ -12,7 +12,9 @@ import 'my_tasks_screen.dart';
 import 'offers_screen.dart';
 
 class MyRequestsScreen extends StatefulWidget {
-  const MyRequestsScreen({super.key});
+  final bool autoOpenCreateRequest;
+
+  const MyRequestsScreen({super.key, this.autoOpenCreateRequest = false});
 
   @override
   State<MyRequestsScreen> createState() => _MyRequestsScreenState();
@@ -27,6 +29,10 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadRequests();
+
+      if (widget.autoOpenCreateRequest) {
+        _openCreateRequest();
+      }
     });
   }
 
@@ -64,7 +70,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
     ).push(MaterialPageRoute(builder: (_) => const ChatScreen()));
   }
 
-    /// Open Offers.
+  /// Open Offers.
   void _openOffers() {
     Navigator.of(context).pop();
 
@@ -90,7 +96,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
       // ==============================
       // Requester mode left sidebar
       // ==============================
-            drawer: AppDrawer(
+      drawer: AppDrawer(
         onOffers: _openOffers,
 
         onMyTasks: _openMyTasks,

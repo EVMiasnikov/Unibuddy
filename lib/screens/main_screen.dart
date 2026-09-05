@@ -19,30 +19,30 @@ class MainScreen extends StatelessWidget {
 
   void _openOffers(BuildContext context) {
     Navigator.of(context).pop();
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const OffersScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const OffersScreen()));
   }
 
   void _openMyTasks(BuildContext context) {
     Navigator.of(context).pop();
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const MyTasksScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const MyTasksScreen()));
   }
 
   void _openMyRequests(BuildContext context) {
     Navigator.of(context).pop();
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const MyRequestsScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const MyRequestsScreen()));
   }
 
   void _openMyChats(BuildContext context) {
     Navigator.of(context).pop();
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ChatScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ChatScreen()));
   }
 
   @override
@@ -99,7 +99,9 @@ class MainScreen extends StatelessWidget {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const MyRequestsScreen(),
+                            builder: (_) => const MyRequestsScreen(
+                              autoOpenCreateRequest: true,
+                            ),
                           ),
                         );
                       },
