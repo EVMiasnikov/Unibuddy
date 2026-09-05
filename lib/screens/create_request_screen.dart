@@ -10,6 +10,7 @@ import '../widgets/main_bottom_bar.dart';
 
 import 'buddy_search_screen.dart';
 import 'profile_view_screen.dart';
+import '../services/calendar_service.dart';
 
 class CreateRequestScreen extends StatefulWidget {
   const CreateRequestScreen({
@@ -261,14 +262,31 @@ class _CreateRequestScreenState
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Request created successfully.',
+        SnackBar(
+          content: const Text('Request created successfully.'),
+          action: SnackBarAction(
+            label: 'Add to Calendar',
+            onPressed: () async {
+              final error = await CalendarService().addEvent(
+                title: 'Unibuddy: ${request.helpType.label}',
+                description: request.note ?? '',
+                location: '${request.city}, ${request.country}',
+                start: request.dateTime,
+                duration: const Duration(hours: 1),
+              );
+
+              if (!mounted) return;
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(error ?? 'Added to your calendar.')),
+              );
+            },
           ),
         ),
       );
 
-      Navigator.of(context).pop(true);
+      Navigator.of(context)
+          .pop(true);
     } else {
       final error =
           context

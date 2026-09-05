@@ -9,6 +9,7 @@ import 'chat_screen.dart';
 import 'offers_screen.dart';
 import '../widgets/main_bottom_bar.dart';
 import 'my_requests_screen.dart';
+import '../services/calendar_service.dart';
 
 class MyTasksScreen extends StatefulWidget {
   const MyTasksScreen({super.key});
@@ -423,6 +424,22 @@ class _TaskCard extends StatelessWidget {
     }
   }
 
+  Future<void> _addToCalendar(BuildContext context) async {
+    final error = await CalendarService().addEvent(
+      title: 'Unibuddy: ${task.helpType.label}',
+      description: task.note ?? '',
+      location: '${task.city}, ${task.country}',
+      start: task.dateTime,
+      duration: const Duration(hours: 1),
+    );
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(error ?? 'Added to your calendar.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final date = task.dateTime;
@@ -549,6 +566,17 @@ class _TaskCard extends StatelessWidget {
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
                   ),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _addToCalendar(context),
+                  icon: const Icon(Icons.calendar_today_outlined),
+                  label: const Text('Add to Calendar'),
                 ),
               ),
             ],

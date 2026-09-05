@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Unibuddy uses your calendar to add accepted buddy requests as events.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Unibuddy uses your calendar to add accepted buddy requests as events.</string>
 </dict>
 </plist>
