@@ -11,6 +11,7 @@ import '../widgets/main_bottom_bar.dart';
 import 'buddy_search_screen.dart';
 import 'profile_view_screen.dart';
 import '../services/calendar_service.dart';
+import 'location_picker_screen.dart';
 
 class CreateRequestScreen extends StatefulWidget {
   const CreateRequestScreen({
@@ -42,6 +43,8 @@ class _CreateRequestScreenState
   // =========================================================
 
   LocationSelection? _selectedLocation;
+
+  PickedLocation? _specificLocation;
 
   // =========================================================
   // SPECIFIC BUDDY
@@ -235,6 +238,9 @@ class _CreateRequestScreenState
       country: location.country,
 
       city: location.city,
+      specificLocationLabel: _specificLocation?.label,
+      specificLat: _specificLocation?.lat,
+      specificLng: _specificLocation?.lng,
 
       dateTime: requestDateTime,
 
@@ -300,6 +306,25 @@ class _CreateRequestScreenState
         ),
       );
     }
+  }
+
+  // =========================================================
+  // SPECIFIC LOCATION
+  // =========================================================
+
+  Future<void> _pickSpecificLocation() async {
+    final location = _selectedLocation;
+    final query = location == null ? null : '${location.city}, ${location.country}';
+
+    final picked = await Navigator.of(context).push<PickedLocation>(
+      MaterialPageRoute(
+        builder: (_) => LocationPickerScreen(initialQuery: query),
+      ),
+    );
+
+    if (!mounted || picked == null) return;
+
+    setState(() => _specificLocation = picked);
   }
 
   @override
@@ -437,6 +462,60 @@ class _CreateRequestScreenState
                 });
               },
             ),
+
+            // =================================================
+            // SPECIFIC LOCATION (OPTIONAL)
+            // =================================================
+
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Specific Location',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Text(
+                  'Optional',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 6),
+
+            const Text(
+              'Point at a district or landmark within the city, if it helps your buddy find you.',
+              style: TextStyle(color: Colors.grey),
+            ),
+
+            const SizedBox(height: 12),
+
+            if (_specificLocation == null)
+              OutlinedButton.icon(
+                onPressed: _pickSpecificLocation,
+                icon: const Icon(Icons.map_outlined),
+                label: const Text('Choose on map'),
+              )
+            else
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.location_pin, color: Colors.red),
+                  title: Text(_specificLocation!.label),
+                  trailing: IconButton(
+                    tooltip: 'Remove',
+                    icon: const Icon(Icons.close),
+                    onPressed: () => setState(() => _specificLocation = null),
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 24),
 
             const SizedBox(height: 24),
 

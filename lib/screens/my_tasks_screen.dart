@@ -10,6 +10,7 @@ import 'offers_screen.dart';
 import '../widgets/main_bottom_bar.dart';
 import 'my_requests_screen.dart';
 import '../services/calendar_service.dart';
+import '../widgets/location_link.dart';
 
 class MyTasksScreen extends StatefulWidget {
   const MyTasksScreen({super.key});
@@ -502,14 +503,12 @@ class _TaskCard extends StatelessWidget {
             // =========================
             // Location
             // =========================
-            Row(
-              children: [
-                const Icon(Icons.location_on_outlined, size: 18),
-
-                const SizedBox(width: 6),
-
-                Text('${task.city}, ${task.country}'),
-              ],
+            LocationLink(
+              city: task.city,
+              country: task.country,
+              specificLocationLabel: task.specificLocationLabel,
+              specificLat: task.specificLat,
+              specificLng: task.specificLng,
             ),
 
             const SizedBox(height: 8),

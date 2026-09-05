@@ -10,6 +10,7 @@ import 'chat_screen.dart';
 import 'my_tasks_screen.dart';
 import '../widgets/main_bottom_bar.dart';
 import 'my_requests_screen.dart';
+import '../widgets/location_link.dart';
 
 class OffersScreen extends StatefulWidget {
   const OffersScreen({super.key});
@@ -520,19 +521,12 @@ class _OfferCard extends StatelessWidget {
             // =================================================
             // LOCATION
             // =================================================
-            Row(
-              children: [
-                const Icon(Icons.location_on_outlined, size: 18),
-
-                const SizedBox(width: 6),
-
-                Expanded(
-                  child: Text(
-                    '${request.city}, '
-                    '${request.country}',
-                  ),
-                ),
-              ],
+            LocationLink(
+              city: request.city,
+              country: request.country,
+              specificLocationLabel: request.specificLocationLabel,
+              specificLat: request.specificLat,
+              specificLng: request.specificLng,
             ),
 
             const SizedBox(height: 8),

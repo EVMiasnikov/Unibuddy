@@ -11,6 +11,7 @@ import '../widgets/main_bottom_bar.dart';
 import 'my_tasks_screen.dart';
 import 'offers_screen.dart';
 import '../services/calendar_service.dart';
+import '../widgets/location_link.dart';
 
 class MyRequestsScreen extends StatefulWidget {
   final bool autoOpenCreateRequest;
@@ -725,14 +726,12 @@ class _RequestCard extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            Row(
-              children: [
-                const Icon(Icons.location_on_outlined, size: 18),
-
-                const SizedBox(width: 6),
-
-                Text('${request.city}, ${request.country}'),
-              ],
+            LocationLink(
+              city: request.city,
+              country: request.country,
+              specificLocationLabel: request.specificLocationLabel,
+              specificLat: request.specificLat,
+              specificLng: request.specificLng,
             ),
 
             const SizedBox(height: 8),

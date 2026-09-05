@@ -45,6 +45,7 @@ enum RequestStatus {
 /// A real help request created by an exchange student.
 class BuddyRequest {
   /// Firestore document ID.
+  /// It can be null before the request is uploaded.
   final String? id;
 
   /// User who created the request.
@@ -64,9 +65,17 @@ class BuddyRequest {
   final String country;
   final String city;
 
+  /// Optional, more precise pin within the city (e.g. a specific district
+  /// or landmark) - picked on a map, reverse-geocoded to a readable label.
+  /// Null means only country/city are known, same as before this feature.
+  final String? specificLocationLabel;
+  final double? specificLat;
+  final double? specificLng;
+
   /// When the help is needed.
   final DateTime dateTime;
-
+  
+  /// Optional:
   /// null = visible to all buddies.
   /// not null = request is aimed at one specific buddy.
   final String? targetBuddyId;
@@ -111,6 +120,9 @@ class BuddyRequest {
     this.note,
     required this.country,
     required this.city,
+    this.specificLocationLabel,
+    this.specificLat,
+    this.specificLng,
     required this.dateTime,
     this.targetBuddyId,
     this.acceptedBuddyId,
@@ -137,6 +149,9 @@ class BuddyRequest {
       'note': note,
       'country': country,
       'city': city,
+      'specificLocationLabel': specificLocationLabel,
+      'specificLat': specificLat,
+      'specificLng': specificLng,
       'dateTime': dateTime,
       'targetBuddyId': targetBuddyId,
       'acceptedBuddyId': acceptedBuddyId,
@@ -188,7 +203,9 @@ class BuddyRequest {
 
       city:
           map['city'] as String,
-
+      specificLocationLabel: map['specificLocationLabel'] as String?,
+      specificLat: (map['specificLat'] as num?)?.toDouble(),
+      specificLng: (map['specificLng'] as num?)?.toDouble(),
       dateTime:
           (map['dateTime'] as Timestamp)
               .toDate(),
