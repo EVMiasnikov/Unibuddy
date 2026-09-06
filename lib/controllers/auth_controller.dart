@@ -85,11 +85,13 @@ class AuthController extends ChangeNotifier {
     return _persistUserUpdate(updated);
   }
 
-  /// Updates buddy-related settings (currently just city) without
-  /// touching the accepting/not-accepting status itself.
-  Future<bool> updateBuddyCity(String city) async {
+
+  /// Updates buddy-related settings (country + city together, since the
+  /// standardized picker always ties one to the other) without touching
+  /// the accepting/not-accepting status itself.
+  Future<bool> updateBuddyLocation(String country, String city) async {
     if (_currentUser == null) return false;
-    final updated = _currentUser!.copyWith(city: city);
+    final updated = _currentUser!.copyWith(country: country, city: city);
     return _persistUserUpdate(updated);
   }
 

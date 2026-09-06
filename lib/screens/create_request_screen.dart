@@ -463,6 +463,8 @@ class _CreateRequestScreenState
               },
             ),
 
+            const SizedBox(height: 20),
+
             // =================================================
             // SPECIFIC LOCATION (OPTIONAL)
             // =================================================
@@ -514,8 +516,6 @@ class _CreateRequestScreenState
                   ),
                 ),
               ),
-
-            const SizedBox(height: 24),
 
             const SizedBox(height: 24),
 

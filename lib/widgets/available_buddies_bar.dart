@@ -15,6 +15,8 @@ class AvailableBuddiesBar extends StatefulWidget {
 }
 
 class _AvailableBuddiesBarState extends State<AvailableBuddiesBar> {
+  String? _loadedCity;
+
   @override
   void initState() {
     super.initState();
@@ -25,6 +27,8 @@ class _AvailableBuddiesBarState extends State<AvailableBuddiesBar> {
     final user = context.read<AuthController>().currentUser;
     final city = user?.city;
     if (city == null || city.isEmpty) return;
+
+    _loadedCity = city;
     await context.read<BuddyDirectoryController>().loadAvailableBuddies(
           city,
           excludeUserId: user?.id,
@@ -35,6 +39,12 @@ class _AvailableBuddiesBarState extends State<AvailableBuddiesBar> {
   Widget build(BuildContext context) {
     final city = context.watch<AuthController>().currentUser?.city;
     final controller = context.watch<BuddyDirectoryController>();
+
+    // City changed since the last load (e.g. the user just updated their
+    // location) - refetch for the new city instead of showing stale buddies.
+    if (city != null && city.isNotEmpty && city != _loadedCity) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+    }
 
     // No city set yet (e.g. profile setup incomplete) - nothing to show.
     if (city == null || city.isEmpty) return const SizedBox.shrink();
