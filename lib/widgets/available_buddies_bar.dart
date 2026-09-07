@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/buddy_directory_controller.dart';
 import '../screens/profile_view_screen.dart';
-
+import '../screens/all_buddies_screen.dart';
 /// A horizontal strip of avatars advertising who's currently available
 /// as a buddy in the user's city - a lightweight "there are people here"
 /// nudge, not a full directory (that's what buddy search is for).
@@ -63,16 +63,39 @@ class _AvailableBuddiesBarState extends State<AvailableBuddiesBar> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Buddies available in $city',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Buddies available in $city',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+      ),
+    ),
+
+    TextButton(
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => AllBuddiesScreen(
+              city: city,
+              buddies: controller.buddies,
+            ),
+          ),
+        );
+      },
+      child: const Text('See more'),
+    ),
+  ],
+),
+const SizedBox(height: 4),
         SizedBox(
           height: 88,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: controller.buddies.length,
+            itemCount:controller.buddies.length > 5 ? 5 : controller.buddies.length,
             separatorBuilder: (_, _) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
               final buddy = controller.buddies[index];
