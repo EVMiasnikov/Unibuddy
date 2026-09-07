@@ -528,107 +528,136 @@ class _RequestCard extends StatelessWidget {
   }
 
   Future<void> _submitFeedback(BuildContext context) async {
-    if (request.id == null) {
-      return;
-    }
+  if (request.id == null) {
+    return;
+  }
 
-    final commentController = TextEditingController();
-    var rating = 5;
+  var rating = 5;
+  var feedbackText = '';
 
-    final submitted = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Leave Feedback'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      final value = index + 1;
+  final submitted = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          return AlertDialog(
+            scrollable: true,
+            title: const Text('Leave Feedback'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(5, (index) {
+                    final value = index + 1;
 
-                      return IconButton(
-                        onPressed: () {
-                          setDialogState(() {
-                            rating = value;
-                          });
-                        },
-                        icon: Icon(
-                          value <= rating ? Icons.star : Icons.star_border,
-                          color: Colors.amber,
-                        ),
-                      );
-                    }),
-                  ),
-                  TextField(
-                    controller: commentController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Comment',
-                      hintText: 'How was the help?',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
-                  child: const Text('Cancel'),
+                    return IconButton(
+                      onPressed: () {
+                        setDialogState(() {
+                          rating = value;
+                        });
+                      },
+                      icon: Icon(
+                        value <= rating
+                            ? Icons.star
+                            : Icons.star_border,
+                        color: Colors.amber,
+                      ),
+                    );
+                  }),
                 ),
-                FilledButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(true);
+
+                const SizedBox(height: 8),
+
+                TextField(
+                  maxLines: 3,
+                  onChanged: (value) {
+                    feedbackText = value;
                   },
-                  child: const Text('Submit'),
+                  decoration: const InputDecoration(
+                    labelText: 'Comment',
+                    hintText: 'How was the help?',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
               ],
-            );
-          },
-        );
-      },
-    );
+            ),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  FocusManager.instance.primaryFocus?.unfocus();
 
-    final feedback = commentController.text.trim();
-    commentController.dispose();
+                  await Future<void>.delayed(
+                    const Duration(milliseconds: 150),
+                  );
 
-    if (submitted != true || !context.mounted) {
-      return;
-    }
+                  if (dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop(false);
+                  }
+                },
+                child: const Text('Cancel'),
+              ),
 
-    final controller = context.read<RequestController>();
+              FilledButton(
+                onPressed: () async {
+                  FocusManager.instance.primaryFocus?.unfocus();
 
-    final success = await controller.submitRequesterFeedback(
-      requestId: request.id!,
-      rating: rating,
-      feedback: feedback,
-    );
+                  // Give Android's soft keyboard time to close
+                  // before removing the dialog.
+                  await Future<void>.delayed(
+                    const Duration(milliseconds: 150),
+                  );
 
-    if (!context.mounted) {
-      return;
-    }
-
-    if (success) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Feedback submitted.')));
-
-      await onChanged();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            controller.errorMessage ?? 'Failed to submit feedback.',
-          ),
-        ),
+                  if (dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop(true);
+                  }
+                },
+                child: const Text('Submit'),
+              ),
+            ],
+          );
+        },
       );
-    }
+    },
+  );
+
+  if (submitted != true || !context.mounted) {
+    return;
   }
+
+  final feedback = feedbackText.trim();
+
+  final controller = context.read<RequestController>();
+
+  final success = await controller.submitRequesterFeedback(
+    requestId: request.id!,
+    rating: rating,
+    feedback: feedback,
+  );
+
+  if (!context.mounted) {
+    return;
+  }
+
+  if (success) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Feedback submitted.'),
+      ),
+    );
+
+    await onChanged();
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          controller.errorMessage ?? 'Failed to submit feedback.',
+        ),
+      ),
+    );
+  }
+}
 
   Future<void> _addToCalendar(BuildContext context) async {
     final error = await CalendarService().addEvent(
