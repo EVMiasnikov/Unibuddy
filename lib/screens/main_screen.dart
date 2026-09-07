@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'create_request_screen.dart';
 import '../controllers/auth_controller.dart';
 import '../models/buddy_mode.dart';
 import '../widgets/app_drawer.dart';
@@ -96,15 +96,27 @@ class MainScreen extends StatelessWidget {
                     final requestTile = MainActionTile(
                       icon: BuddyMode.seekBuddy.icon,
                       label: BuddyMode.seekBuddy.title,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const MyRequestsScreen(
-                              autoOpenCreateRequest: true,
-                            ),
-                          ),
-                        );
-                      },
+                  onTap: () async {
+                    final created = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(
+                      builder: (_) => const CreateRequestScreen(),
+                    ),
+                  );
+
+                    if (!context.mounted) {
+                      return;
+                  }
+
+                // If a request was successfully created,
+                // go to My Requests so the user can see it.
+                if (created == true) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const MyRequestsScreen(),
+                        ),
+                      );
+                    }
+                  },
                     );
 
                     if (constraints.maxWidth < 520) {
